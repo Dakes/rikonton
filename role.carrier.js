@@ -27,10 +27,11 @@ module.exports =
                 try{creep.memory.delivering;}
                 catch{creep.memory.delivering = false;}
 
+                /*
                 if (creep.memory.delivering === false)
                 {
                     let dropped_energy = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES)
-                    if(dropped_energy && creep.pickup(dropped_energy) == ERR_NOT_IN_RANGE && creep.memory.delivering === false)
+                    if(dropped_energy && creep.pickup(dropped_energy) === ERR_NOT_IN_RANGE && creep.memory.delivering === false)
                     {
                         //console.log("carrier moving to dropped energy");
                         creep.moveTo(dropped_energy);
@@ -40,13 +41,14 @@ module.exports =
                         creep.memory.delivering = true;
                     }
                 }
+                 */
 
                 if(creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.delivering === false)
                 {
                     if(Object.keys(Game.creeps).length < 3){return;}
-                    if(creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    if(creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
-                        creep.moveTo(spawn);
+                        creep.moveTo(spawn.room.storage);
                     }
                     if(creep.energy > creep.energyCapacity - 10)
                     {
@@ -65,7 +67,7 @@ module.exports =
                         // DELIVERING TO TOWER
                         if(structures[struct].structureType === "tower")
                         {
-                            tower = structures[struct];
+                            let tower = structures[struct];
                             if(tower.energy === tower.energyCapacity){continue;}
                             creep.memory.delivering = true;
                             // let test = creep.transfer(towers[tower], RESOURCE_ENERGY);
@@ -81,9 +83,10 @@ module.exports =
                             return;
                         }
 
+                        // DELIVERING TO EXTENSION
                         if(structures[struct].structureType === STRUCTURE_EXTENSION)
                         {
-                            extension = structures[struct];
+                            let extension = structures[struct];
                             if(extension.energy === extension.energyCapacity){continue;}
                             creep.memory.delivering = true;
                             if(creep.transfer(extension, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
@@ -95,10 +98,24 @@ module.exports =
                                 creep.memory.delivering = false;
                             }
                             return;
-
-
-
                         }
+
+                        //DELIVERING TO SPAWN
+                        if(spawn.energy < spawn.energyCapacity)
+                        {
+                            creep.memory.delivering = true;
+                            if(creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                            {
+                                creep.moveTo(spawn);
+                                creep.memory.delivering = false;
+                            }
+                            if(creep.carry[RESOURCE_ENERGY] === 0)
+                            {
+                                creep.memory.delivering = false;
+                            }
+                            return;
+                        }
+
 
 
                     }

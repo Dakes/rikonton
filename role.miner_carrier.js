@@ -45,11 +45,11 @@ module.exports =
                        creep.moveTo(spawn);
                     }
                 }
-                else
+                if(spawn.room.storage && spawn.room.storage.store[RESOURCE_ENERGY] < spawn.room.storage.storeCapacity)
                 {
-                    if (creep.upgradeController(creep.room.controller) === ERR_NOT_IN_RANGE)
+                    if(creep.transfer(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
-                        creep.moveTo(creep.room.controller);
+                       creep.moveTo(spawn.room.storage);
                     }
                 }
 

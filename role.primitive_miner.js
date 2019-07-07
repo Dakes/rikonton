@@ -2,7 +2,7 @@ module.exports =
 {
     run(spawn)
     {
-        let total_creep_count = 5;
+        let total_creep_count = 8;
 
         let sources = spawn.room.find(FIND_SOURCES);
 
@@ -64,7 +64,7 @@ module.exports =
             if (name.includes('Miner-')) { miner_creeps++;}
         }
 
-        if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length < 10)
+        if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length < 12)
         {
             spawn.spawnCreep([MOVE, WORK, CARRY, CARRY, CARRY],
             spawn.name + '-' + 'Primitive_miner' + '-' + Game.time);
