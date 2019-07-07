@@ -81,6 +81,25 @@ module.exports =
                             return;
                         }
 
+                        if(structures[struct].structureType === STRUCTURE_EXTENSION)
+                        {
+                            extension = structures[struct];
+                            if(extension.energy === extension.energyCapacity){continue;}
+                            creep.memory.delivering = true;
+                            if(creep.transfer(extension, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                            {
+                                creep.moveTo(extension);
+                            }
+                            if(creep.carry[RESOURCE_ENERGY] === 0)
+                            {
+                                creep.memory.delivering = false;
+                            }
+                            return;
+
+
+
+                        }
+
 
                     }
                 }

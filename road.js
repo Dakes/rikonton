@@ -17,8 +17,7 @@ module.exports = {
 
         */
 
-        //Memory.road_build_counter = 99999;Memory.road_calculate_counter = 99999;
-        //spawn.room.memory.tower_set = false;
+        //Memory.road_build_counter = 99999;Memory.road_calculate_counter = 99999;spawn.room.memory.tower_set = false;
 
         let total_creep_count = 1;
 
@@ -83,19 +82,44 @@ module.exports = {
                     Memory.room_controller_set = true;
                 }
                 // tower streets
+                //Memory.road_build_counter = 99999;Memory.road_calculate_counter = 99999;spawn.room.memory.tower_set = false;
+
                 if (!spawn.room.memory.tower_set)
                 {
                     let structures = spawn.room.find(FIND_MY_STRUCTURES);
                     // for every tower
                     for(let struct in structures)
                     {
-                        let tower = structures[struct];
-                        if(tower.structureType === "tower")
+                        if(structures[struct].structureType === "tower")
                         {
+                            let tower = structures[struct];
+                            let min_path = tower.pos.findPathTo(spawn.pos);
+
+                            // now loop through every road, calculate the path and save the min
+                            let road_structures = spawn.room.find(FIND_STRUCTURES);
+                            for(let road_struct in road_structures)
+                            {
+                                console.log(road_structures[road_struct].structureType);
+                                if (road_structures[road_struct].structureType === "road")
+                                {
+                                    let road = road_structures[road_struct];
+                                    let current = tower.pos.findPathTo(road.pos);
+                                    console.log(current.lenghth);
+                                    if(current.length < min_path.length && current.length !== 0)
+                                    {
+                                        min_path = current;
+                                        console.log("setting min path");
+                                    }
+                                }
+                            }
+
+
+
+
                             // let path = tower.pos.findPathTo(FIND_MY_STRUCTURES, {filter: function(object) {return object.structureType === "road"}});
-                            let path = tower.pos.findPathTo(spawn.pos);
-                            console.log(path);
-                            Memory.road_array.push([spawn.name, "tower" + struct, path]);
+                            // let path = tower.pos.findPathTo(spawn.pos);  // working
+                            // console.log(path);
+                            Memory.road_array.push([spawn.name, "tower" + struct, min_path]);
 
                         }
                     }
