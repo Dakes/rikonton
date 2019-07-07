@@ -21,10 +21,13 @@ module.exports =
 
             for(let name in Game.creeps)
             {
-                if (!name.includes("Carrier")) {continue;}
+                if (!name.includes("Carrier-")) {continue;}
                 let creep = Game.creeps[name];
 
-                if (creep.memory.getting_energy === true)
+                try{creep.memory.delivering;}
+                catch{creep.memory.delivering = false;}
+
+                if (creep.memory.delivering === false)
                 {
                     let dropped_energy = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES)
                     if(dropped_energy && creep.pickup(dropped_energy) == ERR_NOT_IN_RANGE && creep.memory.delivering === false)
@@ -34,12 +37,11 @@ module.exports =
                     }
                     if(creep.energy < creep.energyCapacity - 10)
                     {
-                        creep.memory.getting_energy = false;
                         creep.memory.delivering = true;
                     }
                 }
 
-                if(creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.getting_energy === true)
+                if(creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.delivering === false)
                 {
                     if(Object.keys(Game.creeps).length < 3){return;}
                     if(creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
@@ -48,11 +50,10 @@ module.exports =
                     }
                     if(creep.energy > creep.energyCapacity - 10)
                     {
-                        creep.memory.getting_energy = false;
+                        creep.memory.delivering = true;
                     }
                     if(creep.energy < creep.energyCapacity - 10)
                     {
-                        creep.memory.getting_energy = false;
                         creep.memory.delivering = true;
                     }
                 }
@@ -76,10 +77,8 @@ module.exports =
                             if(creep.carry[RESOURCE_ENERGY] === 0)
                             {
                                 creep.memory.delivering = false;
-                                creep.memory.getting_energy = true;
                             }
                             return;
-                            break;
                         }
 
 
@@ -94,11 +93,13 @@ module.exports =
             console.log(e);
             creep.memory.delivering = false;
         }
+
+
         // Spawning new carrier creep
         let current_creeps = 0;
         for (let name in Game.creeps)
         {
-            if (name.includes('Carrier')) { current_creeps++;}
+            if (name.includes('Carrier-')) { current_creeps++;}
         }
 
         // only spawn road constructor, if there are at least 5 other creeps and no road constructor
@@ -106,12 +107,6 @@ module.exports =
         {
             let name = spawn.name + '-' + 'Carrier' + '-' + Game.time;
             spawn.spawnCreep([CARRY, CARRY, CARRY, CARRY, MOVE], name);
-            new_carrier = spawn.room.find(FIND_CREEPS, {filter: function(object) {return object.name.includes(name)}});
-            if(new_carrier)
-            {
-                new_carrier.memory.delivering = false;
-                new_carrier.memory.getting_energy = true;
-            }
         }
 
 

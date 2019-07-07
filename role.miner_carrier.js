@@ -8,34 +8,32 @@
  console.log();
  */
 
-module.exports = {
+module.exports =
+{
     run(spawn)
     {
-
-        let total_creep_count = 16;
-
         let sources = spawn.room.find(FIND_SOURCES);
-
+        let total_creep_count = Object.keys(sources).length * 2;
 
         for(let name in Game.creeps)
         {
-            if (!name.includes("Miner")){continue;}
+            if (!name.includes("Miner_carrier")){continue;}
             let creep = Game.creeps[name];
-            if(creep.memory.mining)
+
+            try{creep.memory.collecting;}
+            catch{creep.memory.collecting = true;}
+
+            if(creep.memory.collecting)
             {
                 // first check if sources are dropped
                 let dropped_energy = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES)
-                if(creep.pickup(dropped_energy) == ERR_NOT_IN_RANGE)
+                if(creep.pickup(dropped_energy) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(dropped_energy);
                 }
-                else if(creep.harvest(sources[0]) === ERR_NOT_IN_RANGE)
+                if(creep.carry[RESOURCE_ENERGY] === creep.carryCapacity)
                 {
-                   creep.moveTo(sources[0]);
-                }
-                if(creep.carry[RESOURCE_ENERGY] == creep.carryCapacity)
-                {
-                    creep.memory.mining = false;
+                    creep.memory.collecting = false;
                 }
             }
             else
@@ -57,23 +55,22 @@ module.exports = {
 
                 if (creep.carry[RESOURCE_ENERGY] === 0)
                 {
-                    creep.memory.mining = true;
+                    creep.memory.collecting = true;
                 }
             }
         }
 
 
 
-        let miner_creeps = 0;
+        let current_creeps = 0;
         for (let name in Game.creeps)
         {
-            if (name.includes('Miner')) { miner_creeps++;}
+            if (name.includes('Miner_carrier')) { current_creeps++;}
         }
-
-        if(miner_creeps < total_creep_count)
+        if(current_creeps < total_creep_count)
         {
-            spawn.spawnCreep([MOVE, WORK, WORK, CARRY],
-            spawn.name + '-' + 'Miner' + '-' + Game.time);
+            spawn.spawnCreep([MOVE, CARRY, CARRY, CARRY, CARRY, CARRY],
+            spawn.name + '-' + 'Miner_carrier' + '-' + Game.time);
         }
 
     }

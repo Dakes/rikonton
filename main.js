@@ -9,12 +9,18 @@ module.exports.loop = function()
     let defenders = require("role.defender");
     let constructors = require("role.constructor");
     let carriers = require("role.carrier");
-    let rooms = require("room");
+    let miners = require("role.miner");
+    let miner_carriers = require("role.miner_carrier");
+    let primitive_miners = require("role.primitive_miner");
     let roads = require("road");
     let towers = require("tower");
 
+
+
     defenders.run(Game.spawns["Spawn"]);
-    rooms.run(Game.spawns["Spawn"]);
+    primitive_miners.run(Game.spawns["Spawn"]);
+    miners.run(Game.spawns["Spawn"]);
+    miner_carriers.run(Game.spawns["Spawn"]);
     roads.run(Game.spawns["Spawn"]);
     towers.run(Game.spawns["Spawn"]);
     constructors.run(Game.spawns["Spawn"]);

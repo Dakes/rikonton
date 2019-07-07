@@ -16,7 +16,9 @@ module.exports = {
         Memory.room_controller_set = false;
 
         */
-        spawn.room.memory.tower_set = false;
+
+        //Memory.road_build_counter = 99999;Memory.road_calculate_counter = 99999;
+        //spawn.room.memory.tower_set = false;
 
         let total_creep_count = 1;
 
@@ -53,6 +55,7 @@ module.exports = {
                 Memory.road_calculate_counter++;
                 if(Memory.road_calculate_counter > 10000)
                 {
+                    console.log("recalculating roads");
                     Memory.road_array = [];
                     Memory.source_set = false;
                     Memory.room_controller_set = false;
@@ -86,14 +89,13 @@ module.exports = {
                     // for every tower
                     for(let struct in structures)
                     {
-                        tower = structures[struct];
+                        let tower = structures[struct];
                         if(tower.structureType === "tower")
                         {
-                            console.log("in here2");
-                            let path = tower.pos.findPathTo(FIND_MY_STRUCTURES, {filter: function(object) {return object.structureType === "road"}});
+                            // let path = tower.pos.findPathTo(FIND_MY_STRUCTURES, {filter: function(object) {return object.structureType === "road"}});
+                            let path = tower.pos.findPathTo(spawn.pos);
                             console.log(path);
-                            // Memory.road_array.push([spawn.name, "tower" + struct, path]);
-                            console.log("test");
+                            Memory.road_array.push([spawn.name, "tower" + struct, path]);
 
                         }
                     }
@@ -108,6 +110,7 @@ module.exports = {
                 Memory.road_build_counter++;
                 if(Memory.road_build_counter > 1000)
                 {
+                    console.log("rebuilding roads");
                     for (let i = 0; i < Memory.road_array.length; i++)
                     {
                         for (let j = 0; j < Memory.road_array[i][2].length-1; j++)

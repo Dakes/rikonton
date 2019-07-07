@@ -21,7 +21,7 @@ module.exports =
         // get exits to each side
         // loop for every direction
 
-        directions = [FIND_EXIT_LEFT, FIND_EXIT_TOP, FIND_EXIT_BOTTOM, FIND_EXIT_RIGHT]
+        let directions = [FIND_EXIT_LEFT, FIND_EXIT_TOP, FIND_EXIT_BOTTOM, FIND_EXIT_RIGHT]
         try
         {
             if(!spawn.room.memory.turrets_set)
@@ -32,9 +32,11 @@ module.exports =
                     let x_total = 0;
                     let y_total = 0;
 
-                    exit_coord = spawn.room.find(directions[i])
-                    if(exit_coord.lenght != 0)
+                    let exit_coord = spawn.room.find(directions[i])
+                    if(exit_coord.lenght !== 0)
                     {
+                        // TODO: get room level, calc number of max turrets compare, recalculate at room level increase
+
                         //console.log("in if 2");
                         spawn.room.memory.turret_positions = []; // array of coordinate
                         for(let element in exit_coord)

@@ -37,7 +37,7 @@ module.exports =
         // spawn if total number is smaller and there are enemies in the room
         if(Object.keys(Game.creeps).length > 1 && creep_count < total_creep_count && enemies.length > 0)
         {
-            spawn.spawnCreep([ATTACK, MOVE, MOVE, MOVE],
+            spawn.spawnCreep([ATTACK, ATTACK, MOVE, MOVE],
             spawn.name + '-' + 'Defender' + '-' + Game.time);
         }
 
