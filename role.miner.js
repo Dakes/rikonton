@@ -24,7 +24,6 @@ module.exports =
             // delete miner and free memory, if health is too low
             if (creep.ticksToLive < 20)
             {
-
                 for (let i in spawn.room.memory.occupied_sources)
                 {
                     if (spawn.room.memory.occupied_sources[i] === creep.memory.source)
@@ -33,6 +32,7 @@ module.exports =
                     }
                 }
                 creep.memory.source = false;
+                creep.suicide();
             }
 
 
@@ -41,6 +41,7 @@ module.exports =
             {
                 let source = sources[i];
 
+                // TODO: check this
                 // if source is in memory, it is occupied by miner
                 if (source in spawn.room.memory.occupied_sources)
                 {
