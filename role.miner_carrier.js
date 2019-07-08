@@ -21,7 +21,7 @@ module.exports =
             let creep = Game.creeps[name];
 
             try{creep.memory.collecting;}
-            catch{creep.memory.collecting = true;}
+            catch(e){creep.memory.collecting = true;}
 
             if(creep.memory.collecting)
             {

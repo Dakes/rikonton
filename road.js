@@ -31,7 +31,7 @@ module.exports = {
             {
                 // TODO: automate idle position
                 creep.moveTo(creep.room.getPositionAt(33, 33));
-                return;
+                continue;
             }
 
             // road_array : [[spawn_name, structureType, path], ...]
@@ -162,19 +162,66 @@ module.exports = {
 
             // Creep Code ------------------------------------------------------
 
-            let constSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
-
             // before building, check if creep has energy
+
+            if(typeof creep.memory.building === "undefined"){creep.memory.building = false;}
+            if(typeof creep.memory.road_repair_prev === "undefined"){creep.memory.road_repair_prev = false;}
 
             if(creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.building === false)
             {
-                if(spawn.transferEnergy(creep) === ERR_NOT_IN_RANGE)
+                if(creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                 {
-                    creep.moveTo(spawn);
+                    creep.moveTo(spawn.room.storage);
                 }
             }
             else
             {
+                let road_to_repair = creep.pos.findClosestByRange(
+                    FIND_STRUCTURES, {
+                        filter: function(object){return object.structureType === STRUCTURE_ROAD && (object.hits < object.hitsMax / 2);}
+                    });
+
+
+                if(creep.memory.road_repair_prev !== false)
+                {
+                    creep.memory.building = true;
+
+                    let x = creep.memory.road_repair_prev.pos.x;
+                    let y = creep.memory.road_repair_prev.pos.y;
+                    let current_road = spawn.room.lookForAt(LOOK_STRUCTURES, x, y)[0];
+
+                    if(creep.repair(current_road) === ERR_NOT_IN_RANGE)
+                    {
+                        creep.moveTo(current_road);
+                    }
+                    if(current_road.hits > current_road.hitsMax - 100)
+                    {
+                        creep.memory.road_repair_prev = false;
+                        creep.memory.building = false;
+                    }
+                    continue;
+                }
+
+
+                if(road_to_repair !== null && creep.repair(road_to_repair) === ERR_NOT_IN_RANGE)
+                {
+                    creep.memory.building = true;
+                    creep.moveTo(road_to_repair);
+
+                    continue;
+                }
+                else if(road_to_repair !== null && road_to_repair.hits < road_to_repair.hitsMax - 10)
+                {
+                    creep.memory.road_repair_prev = road_to_repair;
+                }
+
+                if(creep.carry[RESOURCE_ENERGY] === 0){creep.memory.building = false;}
+
+
+                // BUILD THE CONSTRUCTION SITES
+
+                let constSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+
                 for (let siteName in constSites)
                 {
                     if(constSites[siteName].structureType === "road")
@@ -182,38 +229,23 @@ module.exports = {
                         creep.memory.building = true;
                         if(creep.build(constSites[siteName]) === ERR_NOT_IN_RANGE)
                         {
-                            Game.creeps[name].moveTo(constSites[siteName]);
+                            creep.moveTo(constSites[siteName]);
                         }
                         if(creep.carry[RESOURCE_ENERGY] === 0)
                         {
                             creep.memory.building = false;
                         }
-                        return;
                         break;
                     }
-
                 }
 
-                // road repair
-
-                let roadToRepair = creep.pos.findClosestByRange(
-                    FIND_STRUCTURES, {
-                        filter: function(object){return object.structureType === STRUCTURE_ROAD && (object.hits < object.hitsMax / 2);
-                    }
-                });
-
-                if(roadToRepair)
+                if(creep.carry[RESOURCE_ENERGY] === 0)
                 {
-                    if(creep.repair(roadToRepair) === ERR_NOT_IN_RANGE)
-                    {
-                        creep.moveTo(roadToRepair);
-                        break;
-                    }
-
-
+                    creep.memory.building = false;
+                    creep.memory.roadToRepair = false;
                 }
                 // nothing to repair, move to idle position
-                else
+                if(true === false)
                 {
                     // TODO: automate idle position
                     creep.moveTo(creep.room.getPositionAt(33, 33));
@@ -240,10 +272,5 @@ module.exports = {
 
 
     }
-
-    //function build_road_to_structure(let structure)
-    //{
-
-    //}
 
 };

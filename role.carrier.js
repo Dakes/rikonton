@@ -24,8 +24,7 @@ module.exports =
                 if (!name.includes("Carrier-")) {continue;}
                 let creep = Game.creeps[name];
 
-                try{creep.memory.delivering;}
-                catch{creep.memory.delivering = false;}
+                if(typeof creep.memory.delivering === "undefined"){creep.memory.delivering = false;}
 
                 /*
                 if (creep.memory.delivering === false)

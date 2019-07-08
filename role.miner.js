@@ -3,7 +3,7 @@ module.exports =
     run(spawn)
     {
         let sources = spawn.room.find(FIND_SOURCES);
-        let total_creep_count = Object.keys(sources).length * 3;
+        let total_creep_count = Object.keys(sources).length;
 
 
         for(let name in Game.creeps)

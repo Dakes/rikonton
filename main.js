@@ -18,19 +18,24 @@ module.exports.loop = function()
     let structures = require("structures");
 
 
-
-    defenders.run(Game.spawns["Spawn"]);
-    primitive_miners.run(Game.spawns["Spawn"]);
-    miners.run(Game.spawns["Spawn"]);
-    miner_carriers.run(Game.spawns["Spawn"]);
-    constructors.run(Game.spawns["Spawn"]);
-    carriers.run(Game.spawns["Spawn"]);
-
-    roads.run(Game.spawns["Spawn"]);
-    towers.run(Game.spawns["Spawn"]);
-    structures.run(Game.spawns["Spawn"]);
+    for(let i in Game.spawns)
+    {
+        let spawn = Game.spawns[i];
 
 
+        defenders.run(spawn);
+        primitive_miners.run(spawn);
+        miners.run(spawn);
+        miner_carriers.run(spawn);
+        constructors.run(spawn);
+        carriers.run(spawn);
+
+        roads.run(spawn);
+        towers.run(spawn);
+        structures.run(spawn);
+
+
+    }
 
     for (let name in Memory.creeps)
     {
@@ -39,6 +44,7 @@ module.exports.loop = function()
             delete Memory.creeps[name];
         }
     }
+
 
 }
 
