@@ -26,7 +26,9 @@ module.exports =
             if(creep.memory.collecting)
             {
                 // first check if sources are dropped
-                let dropped_energy = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES)
+                let dropped_energy = spawn.room.find(FIND_DROPPED_RESOURCES, {
+                    filter: function(object){return object.resourceType === RESOURCE_ENERGY;}
+                });
                 if(creep.pickup(dropped_energy) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(dropped_energy);

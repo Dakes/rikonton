@@ -26,23 +26,7 @@ module.exports =
 
                 if(typeof creep.memory.delivering === "undefined"){creep.memory.delivering = false;}
 
-                /*
-                if (creep.memory.delivering === false)
-                {
-                    let dropped_energy = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES)
-                    if(dropped_energy && creep.pickup(dropped_energy) === ERR_NOT_IN_RANGE && creep.memory.delivering === false)
-                    {
-                        //console.log("carrier moving to dropped energy");
-                        creep.moveTo(dropped_energy);
-                    }
-                    if(creep.energy < creep.energyCapacity - 10)
-                    {
-                        creep.memory.delivering = true;
-                    }
-                }
-                 */
-
-                if(creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.delivering === false)
+                if(creep.memory.delivering === false && creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10))
                 {
                     if(Object.keys(Game.creeps).length < 3){return;}
                     if(creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
@@ -119,6 +103,7 @@ module.exports =
 
                     }
                 }
+
 
             }
         }

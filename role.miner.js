@@ -80,8 +80,9 @@ module.exports =
             spawn.room.memory.miner_parts = false;
         }
 
-        if (spawn.room.memory.miner_parts === false)
+        if (spawn.room.memory.miner_parts === false || Object.keys(spawn.room.memory.miner_parts).length < 3)
         {
+            console.log("recalculating miner_parts");
             let source = sources[0];
             let source_energy = source.energyCapacity;
             let regeneration = 300;
@@ -89,7 +90,7 @@ module.exports =
             let work_parts = (source_energy / regeneration) / 2;
             spawn.room.memory.miner_parts = [];
             spawn.room.memory.miner_parts.push(MOVE);
-            for(let i=0; i<work_parts; i++)
+            for(let i=0; i < work_parts; i++)
             {
                 spawn.room.memory.miner_parts.push(WORK);
             }
@@ -105,9 +106,11 @@ module.exports =
         // TODO: generate dynamically with howmuch energy is available
         if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length > 3)
         {
+            console.log("Spawning Miner");
+            console.log(spawn.room.memory.miner_parts);
             let miner_parts = spawn.room.memory.miner_parts;
             let part_length = Object.keys(spawn.room.memory.miner_parts).length - 1;
-
+            
             for (let i = 0; i < part_length; i++)
             {
                 let success = spawn.spawnCreep(miner_parts,
