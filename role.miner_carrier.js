@@ -26,9 +26,9 @@ module.exports =
             if(creep.memory.collecting)
             {
                 // first check if sources are dropped
-                let dropped_energy = spawn.room.find(FIND_DROPPED_RESOURCES, {
-                    filter: function(object){return object.resourceType === RESOURCE_ENERGY;}
-                });
+                let dropped_energy = creep.pos.findClosestByPath(FIND_DROPPED_ENERGY);//RESOURCES, {
+                    //filter: function(object){return object === RESOURCE_ENERGY;}
+                //});
                 if(creep.pickup(dropped_energy) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(dropped_energy);
@@ -69,7 +69,7 @@ module.exports =
         {
             if (name.includes('Miner_carrier')) { current_creeps++;}
         }
-        if(current_creeps < total_creep_count)
+        if(current_creeps < total_creep_count && Object.keys(Game.creeps).toString().includes("Miner-"))
         {
             spawn.spawnCreep([MOVE, CARRY, CARRY, CARRY, CARRY, CARRY],
             spawn.name + '-' + 'Miner_carrier' + '-' + Game.time);

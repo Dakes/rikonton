@@ -7,9 +7,9 @@ module.exports.loop = function()
     //}
 
     let defenders = require("role.defender");
+    let miners = require("role.miner");
     let constructors = require("role.constructor");
     let carriers = require("role.carrier");
-    let miners = require("role.miner");
     let miner_carriers = require("role.miner_carrier");
     let primitive_miners = require("role.primitive_miner");
 

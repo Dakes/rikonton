@@ -15,7 +15,7 @@ module.exports =
             {
                 // first check if sources are dropped
                 let dropped_energy = spawn.room.find(FIND_DROPPED_RESOURCES, {
-                    filter: function(object){return object.resourceType === RESOURCE_ENERGY;}
+                    filter: function(object){return object === RESOURCE_ENERGY;}
                 });
 
                 // pickup dropped minerals

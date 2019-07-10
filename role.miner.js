@@ -106,8 +106,6 @@ module.exports =
         // TODO: generate dynamically with howmuch energy is available
         if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length > 3)
         {
-            console.log("Spawning Miner");
-            console.log(spawn.room.memory.miner_parts);
             let miner_parts = spawn.room.memory.miner_parts;
             let part_length = Object.keys(spawn.room.memory.miner_parts).length - 1;
             
@@ -115,7 +113,7 @@ module.exports =
             {
                 let success = spawn.spawnCreep(miner_parts,
                     spawn.name + '-' + 'Miner' + '-' + Game.time);
-                if(success === OK){return;}
+                if(success === OK){console.log("Spawning Miner: ", spawn.room.memory.miner_parts);return;}
                 if(success === ERR_NOT_ENOUGH_ENERGY){miner_parts.pop();}
                 if(success === ERR_BUSY){return;}
             }
