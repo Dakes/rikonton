@@ -26,7 +26,7 @@ module.exports =
             {
                 for (let i in spawn.room.memory.occupied_sources)
                 {
-                    if (spawn.room.memory.occupied_sources[i] === creep.memory.source)
+                    if (spawn.room.memory.occupied_sources[i] === creep.memory.source.id)
                     {
                         spawn.room.memory.occupied_sources.splice(i, 1);
                     }
@@ -43,7 +43,7 @@ module.exports =
 
                 // TODO: check this
                 // if source is in memory, it is occupied by miner
-                if (source in spawn.room.memory.occupied_sources)
+                if (source.id in spawn.room.memory.occupied_sources)
                 {
                     continue;
                 }
@@ -51,17 +51,14 @@ module.exports =
                 if (creep.memory.source === false)
                 {
                     creep.memory.source = source;
-                    spawn.room.memory.occupied_sources.push(source);
+                    spawn.room.memory.occupied_sources.push(source.id);
                 }
 
             }
 
             if (creep.memory.source !== false)
             {
-                // TODO: use ids instead, you idiot
-                let x = creep.memory.source.pos.x;
-                let y = creep.memory.source.pos.y;
-                let source = spawn.room.lookForAt(LOOK_SOURCES, x, y)[0];
+                let source = Game.getObjectById(creep.memory.source.id)
                 if (creep.harvest(source) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(source);
@@ -108,7 +105,7 @@ module.exports =
         {
             let miner_parts = spawn.room.memory.miner_parts;
             let part_length = Object.keys(spawn.room.memory.miner_parts).length - 1;
-            
+
             for (let i = 0; i < part_length; i++)
             {
                 let success = spawn.spawnCreep(miner_parts,
@@ -116,6 +113,7 @@ module.exports =
                 if(success === OK){console.log("Spawning Miner: ", spawn.room.memory.miner_parts);return;}
                 if(success === ERR_NOT_ENOUGH_ENERGY){miner_parts.pop();}
                 if(success === ERR_BUSY){return;}
+                if(miner_parts.length < 3){return;}
             }
         }
     }
