@@ -14,10 +14,9 @@ module.exports =
             if(creep.memory.mining)
             {
                 // first check if sources are dropped
-                // let dropped_energy = spawn.room.find(FIND_DROPPED_RESOURCES, {
-                //     filter: function(object){return object === RESOURCE_ENERGY;}
-                // });
-                let dropped_energy = creep.pos.findClosestByPath(FIND_DROPPED_ENERGY)
+                let dropped_energy = spawn.room.find(FIND_DROPPED_RESOURCES, {
+                    filter: function(object){return object === RESOURCE_ENERGY;}
+                });
 
                 // pickup dropped minerals
                 let dropped_resources = spawn.room.find(FIND_DROPPED_RESOURCES, {

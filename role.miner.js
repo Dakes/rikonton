@@ -28,9 +28,10 @@ module.exports =
                 {
                     if (spawn.room.memory.occupied_sources_id[i] === creep.memory.source_id)
                     {
-                        spawn.room.memory.occupied_sources_id.splice(i, 1);
+                        spawn.room.memory.occupied_sources_id = spawn.room.memory.occupied_sources_id.splice(i, 1);
                     }
                 }
+                console.log("Killing Miner Creep");
                 creep.memory.source_id = false;
                 creep.suicide();
             }
@@ -43,10 +44,7 @@ module.exports =
 
                 // TODO: check this
                 // if source is in memory, it is occupied by miner
-                if (spawn.room.memory.occupied_sources_id.includes(source.id))
-                {
-                    continue;
-                }
+                if (spawn.room.memory.occupied_sources_id.includes(source.id)){continue;}
 
                 if (creep.memory.source_id === false)
                 {
@@ -100,10 +98,9 @@ module.exports =
             if (name.includes('Miner-')) { miner_creeps++;}
         }
 
-        // TODO: generate dynamically with howmuch energy is available
         if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length > 3)
         {
-            let miner_parts = spawn.room.memory.miner_parts;
+            let miner_parts = Array.from(spawn.room.memory.miner_parts);
             let part_length = Object.keys(spawn.room.memory.miner_parts).length - 1;
 
             for (let i = 0; i < part_length; i++)
