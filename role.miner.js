@@ -12,26 +12,26 @@ module.exports =
                 continue;
             }
             let creep = Game.creeps[name];
-            if (typeof creep.memory.source === "undefined")
+            if (typeof creep.memory.source_id === "undefined")
             {
-                creep.memory.source = false;
+                creep.memory.source_id = false;
             }
-            if (typeof spawn.room.memory.occupied_sources === "undefined")
+            if (typeof spawn.room.memory.occupied_sources_id === "undefined")
             {
-                spawn.room.memory.occupied_sources = [];
+                spawn.room.memory.occupied_sources_id = [];
             }
 
             // delete miner and free memory, if health is too low
             if (creep.ticksToLive < 20)
             {
-                for (let i in spawn.room.memory.occupied_sources)
+                for (let i in spawn.room.memory.occupied_sources_id)
                 {
-                    if (spawn.room.memory.occupied_sources[i] === creep.memory.source.id)
+                    if (spawn.room.memory.occupied_sources_id[i] === creep.memory.source_id)
                     {
-                        spawn.room.memory.occupied_sources.splice(i, 1);
+                        spawn.room.memory.occupied_sources_id.splice(i, 1);
                     }
                 }
-                creep.memory.source = false;
+                creep.memory.source_id = false;
                 creep.suicide();
             }
 
@@ -43,22 +43,22 @@ module.exports =
 
                 // TODO: check this
                 // if source is in memory, it is occupied by miner
-                if (source.id in spawn.room.memory.occupied_sources)
+                if (spawn.room.memory.occupied_sources_id.includes(source.id))
                 {
                     continue;
                 }
 
-                if (creep.memory.source === false)
+                if (creep.memory.source_id === false)
                 {
-                    creep.memory.source = source;
-                    spawn.room.memory.occupied_sources.push(source.id);
+                    creep.memory.source_id = source.id;
+                    spawn.room.memory.occupied_sources_id.push(source.id);
                 }
 
             }
 
-            if (creep.memory.source !== false)
+            if (creep.memory.source_id !== false)
             {
-                let source = Game.getObjectById(creep.memory.source.id)
+                let source = Game.getObjectById(creep.memory.source_id)
                 if (creep.harvest(source) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(source);
