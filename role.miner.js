@@ -28,7 +28,7 @@ module.exports =
                 {
                     if (spawn.room.memory.occupied_sources_id[i] === creep.memory.source_id)
                     {
-                        spawn.room.memory.occupied_sources_id = spawn.room.memory.occupied_sources_id.splice(i, 1);
+                        spawn.room.memory.occupied_sources_id.splice(i, 1);
                     }
                 }
                 console.log("Killing Miner Creep");
@@ -38,20 +38,21 @@ module.exports =
 
 
             // set sources in memory
-            for (let i in sources)
+            if(creep.memory.source_id === false)
             {
-                let source = sources[i];
-
-                // TODO: check this
-                // if source is in memory, it is occupied by miner
-                if (spawn.room.memory.occupied_sources_id.includes(source.id)){continue;}
-
-                if (creep.memory.source_id === false)
+                for (let i in sources)
                 {
+                    let source = sources[i];
+
+                    // TODO: check this
+                    // if source is in memory, it is occupied by miner
+                    if (spawn.room.memory.occupied_sources_id.includes(source.id)){continue;}
+
                     creep.memory.source_id = source.id;
                     spawn.room.memory.occupied_sources_id.push(source.id);
-                }
+                    break;
 
+                }
             }
 
             if (creep.memory.source_id !== false)
