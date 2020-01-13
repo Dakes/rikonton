@@ -58,9 +58,9 @@ module.exports = {
                     }
                 }
 
-                // every 100000 ticks recalculate roads, (works)
+                // every 10000 ticks recalculate roads, (works)
                 Memory.road_calculate_counter++;
-                if(Memory.road_calculate_counter > 100000)
+                if(Memory.road_calculate_counter > 10000)
                 {
                     console.log("recalculating roads");
                     Memory.road_array = [];
@@ -69,7 +69,7 @@ module.exports = {
                     Memory.road_calculate_counter = 0;
 
                     // delete old construction sites
-                    let construction_sites = spawn.find(FIND_CONSTRUCTION_SITES);
+                    let construction_sites = spawn.room.find(FIND_CONSTRUCTION_SITES);
                     for (let site of construction_sites)
                     {
                         if (site.structureType === STRUCTURE_ROAD){ site.remove(); }
@@ -161,7 +161,7 @@ module.exports = {
                         }
                     }
                     // delete accidentally built tunnels
-                    let construction_sites = spawn.find(FIND_CONSTRUCTION_SITES);
+                    let construction_sites = spawn.room.find(FIND_CONSTRUCTION_SITES);
                     for (let site of construction_sites)
                     {
                         if (site.structureType === STRUCTURE_ROAD && site.progressTotal > 300)

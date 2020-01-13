@@ -12,7 +12,9 @@ module.exports =
                 continue;
             }
             let creep = Game.creeps[name];
-            if (typeof creep.memory.source_id === "undefined")
+
+            try{creep.memory.source_id.valueOf();}
+            catch(e)
             {
                 creep.memory.source_id = false;
             }
@@ -31,6 +33,7 @@ module.exports =
                         creep.memory.source_id = source.id;
                         break;
                     }
+                    if (creep.memory.source_id !== false){break;}
                 }
             }
 
