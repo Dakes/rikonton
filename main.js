@@ -12,10 +12,12 @@ module.exports.loop = function()
     let carriers = require("role.carrier");
     let miner_carriers = require("role.miner_carrier");
     let primitive_miners = require("role.primitive_miner");
+    let upgrader = require("role.upgrader");
 
     let roads = require("road");
     let towers = require("tower");
     let structures = require("structures");
+
 
 
     for(let i in Game.spawns)
@@ -29,6 +31,7 @@ module.exports.loop = function()
         miner_carriers.run(spawn);
         constructors.run(spawn);
         carriers.run(spawn);
+        upgrader.run(spawn);
 
         roads.run(spawn);
         towers.run(spawn);
