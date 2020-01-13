@@ -13,7 +13,7 @@ module.exports =
     run(spawn)
     {
         let sources = spawn.room.find(FIND_SOURCES);
-        let total_creep_count = Object.keys(sources).length * 2;
+        let total_creep_count = Object.keys(sources).length;// * 2;
 
         for(let name in Game.creeps)
         {
@@ -23,12 +23,13 @@ module.exports =
             try{creep.memory.collecting;}
             catch(e){creep.memory.collecting = true;}
 
+
             if(creep.memory.collecting)
             {
                 // first check if sources are dropped
-                let dropped_energy = creep.pos.findClosestByPath(FIND_DROPPED_ENERGY);//RESOURCES, {
-                    //filter: function(object){return object === RESOURCE_ENERGY;}
-                //});
+                let dropped_energy = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
+                    filter: (dropped_energy) => dropped_energy.resourceType === RESOURCE_ENERGY
+                });
                 if(creep.pickup(dropped_energy) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(dropped_energy);

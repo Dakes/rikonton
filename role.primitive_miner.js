@@ -2,7 +2,7 @@ module.exports =
 {
     run(spawn)
     {
-        let total_creep_count = 8;
+        let total_creep_count = 10;
 
         let sources = spawn.room.find(FIND_SOURCES);
 
@@ -11,6 +11,15 @@ module.exports =
         {
             if (!name.includes("Primitive_miner")){continue;}
             let creep = Game.creeps[name];
+
+            try{creep.memory.source.valueOf();}
+            catch(e)
+            {
+                let time = Game.time;
+                if (time % 2 === 0){ creep.memory.source = 0; }
+                else{ creep.memory.source = 1; }
+            }
+
             if(creep.memory.mining)
             {
                 // first check if sources are dropped
@@ -36,6 +45,13 @@ module.exports =
                 if(creep.pickup(dropped_energy) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(dropped_energy);
+                }
+                else if(sources.length >= 2)
+                {
+                    if(creep.harvest(sources[creep.memory.source]) === ERR_NOT_IN_RANGE)
+                    {
+                       creep.moveTo(sources[creep.memory.source]);
+                    }
                 }
                 else if(creep.harvest(sources[0]) === ERR_NOT_IN_RANGE)
                 {
@@ -91,7 +107,7 @@ module.exports =
             if (name.includes('Miner-')) { miner_creeps++;}
         }
 
-        if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length < 12)
+        if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length < 15)
         {
             spawn.spawnCreep([MOVE, WORK, CARRY, CARRY, CARRY],
             spawn.name + '-' + 'Primitive_miner' + '-' + Game.time);

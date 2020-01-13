@@ -92,12 +92,15 @@ module.exports =
             }
         }
 
+        // for i in sources
 
         let miner_creeps = 0;
         for (let name in Game.creeps)
         {
+            // if source name in creep name, ++ next
             if (name.includes('Miner-')) { miner_creeps++;}
         }
+
 
         if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length > 3)
         {

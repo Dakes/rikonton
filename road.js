@@ -10,12 +10,18 @@
 module.exports = {
     run(spawn)
     {
-        /*
-        Memory.road_array = [];
-        Memory.source_set = false;
-        Memory.room_controller_set = false;
 
-        */
+        // Memory.road_array = [];
+        // Memory.source_set = false;
+        // Memory.room_controller_set = false;
+
+        /*// delete old road construction sites
+        let construction_sites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+        for (let site of construction_sites)
+        {
+            if (site.structureType === STRUCTURE_ROAD){ site.remove(); }
+        }*/
+
 
         //Memory.road_build_counter = 99999;Memory.road_calculate_counter = 99999;spawn.room.memory.tower_set = false;
 
@@ -50,15 +56,22 @@ module.exports = {
                     }
                 }
 
-                // every 10000 ticks recalculate roads, (works)
+                // every 100000 ticks recalculate roads, (works)
                 Memory.road_calculate_counter++;
-                if(Memory.road_calculate_counter > 10000)
+                if(Memory.road_calculate_counter > 100000)
                 {
                     console.log("recalculating roads");
                     Memory.road_array = [];
                     Memory.source_set = false;
                     Memory.room_controller_set = false;
                     Memory.road_calculate_counter = 0;
+
+                    // delete old construction sites
+                    let construction_sites = spawn.find(FIND_CONSTRUCTION_SITES);
+                    for (let site of construction_sites)
+                    {
+                        if (site.structureType === STRUCTURE_ROAD){ site.remove(); }
+                    }
                 }
 
                 // source streets
@@ -145,6 +158,15 @@ module.exports = {
                             Memory.road_build_counter = 0;
                         }
                     }
+                    // delete accidentally built tunnels
+                    let construction_sites = spawn.find(FIND_CONSTRUCTION_SITES);
+                    for (let site of construction_sites)
+                    {
+                        if (site.structureType === STRUCTURE_ROAD && site.progressTotal > 300)
+                        {
+                            site.remove();
+                        }
+                    }
                 }
             }
             catch(e)
@@ -167,6 +189,7 @@ module.exports = {
             if(typeof creep.memory.building === "undefined"){creep.memory.building = false;}
             if(typeof creep.memory.road_repair_prev === "undefined"){creep.memory.road_repair_prev = false;}
 
+            // get energy from storage
             if(creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.building === false)
             {
                 if(creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
