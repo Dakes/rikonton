@@ -188,9 +188,9 @@ module.exports = {
 
             // before building, check if creep has energy
 
-            try{creep.memory.building}
+            try{creep.memory.building.valueOf()}
             catch(e){creep.memory.building = false;}
-            try{creep.memory.road_repair_prev}
+            try{creep.memory.road_repair_prev.valueOf()}
             catch(e){creep.memory.road_repair_prev = false;}
 
             // get energy from storage

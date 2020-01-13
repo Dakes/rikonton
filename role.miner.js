@@ -16,42 +16,21 @@ module.exports =
             {
                 creep.memory.source_id = false;
             }
-            if (typeof spawn.room.memory.occupied_sources_id === "undefined")
-            {
-                spawn.room.memory.occupied_sources_id = [];
-            }
 
-            // delete miner and free memory, if health is too low
-            if (creep.ticksToLive < 20)
-            {
-                for (let i in spawn.room.memory.occupied_sources_id)
-                {
-                    if (spawn.room.memory.occupied_sources_id[i] === creep.memory.source_id)
-                    {
-                        spawn.room.memory.occupied_sources_id.splice(i, 1);
-                    }
-                }
-                console.log("Killing Miner Creep");
-                creep.memory.source_id = false;
-                creep.suicide();
-            }
-
-
-            // set sources in memory
+            // set source in memory
             if(creep.memory.source_id === false)
             {
                 for (let i in sources)
                 {
                     let source = sources[i];
-
-                    // TODO: check this
-                    // if source is in memory, it is occupied by miner
-                    if (spawn.room.memory.occupied_sources_id.includes(source.id)){continue;}
-
-                    creep.memory.source_id = source.id;
-                    spawn.room.memory.occupied_sources_id.push(source.id);
-                    break;
-
+                    // iterate through miners, next if miner has source id
+                    for (let name in Game.creeps)
+                    {
+                        if (!name.includes("Miner-")){continue;}
+                        if(Game.creeps[name].memory.source_id === source.id){continue;}
+                        creep.memory.source_id = source.id;
+                        break;
+                    }
                 }
             }
 
