@@ -15,7 +15,9 @@ module.exports = {
         // Memory.source_set = false;
         // Memory.room_controller_set = false;
 
-        /*// delete old road construction sites
+        // Memory.road_build_counter = 99999
+        /*// delete road construction sites
+        Memory.road_calculate_counter = 99999999
         let construction_sites = spawn.room.find(FIND_CONSTRUCTION_SITES);
         for (let site of construction_sites)
         {
@@ -186,15 +188,26 @@ module.exports = {
 
             // before building, check if creep has energy
 
-            if(typeof creep.memory.building === "undefined"){creep.memory.building = false;}
-            if(typeof creep.memory.road_repair_prev === "undefined"){creep.memory.road_repair_prev = false;}
+            try{creep.memory.building}
+            catch(e){creep.memory.building = false;}
+            try{creep.memory.road_repair_prev}
+            catch(e){creep.memory.road_repair_prev = false;}
 
             // get energy from storage
-            if(creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.building === false)
+            if(spawn.room.storage && creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) &&
+                creep.memory.building === false)
             {
                 if(creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(spawn.room.storage);
+                }
+            }
+            else if((spawn.store.getCapacity() > 290) && creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) &&
+            creep.memory.building === false)
+            {
+                if(creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                {
+                    creep.moveTo(spawn);
                 }
             }
             else
