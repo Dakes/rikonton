@@ -310,10 +310,20 @@ module.exports = {
         // only spawn road constructor, if there are at least 5 other creeps and no road constructor
         if(builder_creeps < total_creep_count && Object.keys(Game.creeps).length > 5)
         {
-            spawn.spawnCreep([CARRY, CARRY, CARRY, WORK, MOVE],
-            spawn.name + '-' + 'Road_constructor' + '-' + Game.time);
-        }
+            let parts = [CARRY, CARRY, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK,
+                CARRY, WORK, MOVE, CARRY, WORK, CARRY, WORK, MOVE, CARRY, WORK, CARRY, WORK, MOVE];
+            let part_length = Object.keys(parts).length - 1;
 
+            for (let i = 0; i < part_length; i++)
+            {
+                let success = spawn.spawnCreep(parts, spawn.name + '-' + 'Road_constructor' + '-' + Game.time);
+                if(success === OK){console.log("Spawning Road_constructor: ", parts);return;}
+                if(success === ERR_NOT_ENOUGH_ENERGY){parts.pop();}
+                if(success === ERR_BUSY){return;}
+                if(parts.length < 5){return;}
+            }
+
+        }
 
     }
 

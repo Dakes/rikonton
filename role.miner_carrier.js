@@ -72,8 +72,19 @@ module.exports =
         }
         if(current_creeps < total_creep_count && Object.keys(Game.creeps).toString().includes("Miner-"))
         {
-            spawn.spawnCreep([MOVE, CARRY, CARRY, CARRY, CARRY, CARRY],
-            spawn.name + '-' + 'Miner_carrier' + '-' + Game.time);
+            let parts = [MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY,
+                CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY];
+            let part_length = Object.keys(parts).length - 1;
+
+            for (let i = 0; i < part_length; i++)
+            {
+                let success = spawn.spawnCreep(parts, spawn.name + '-' + 'Miner_carrier' + '-' + Game.time);
+                if(success === OK){console.log("Spawning Miner Carrier: ", parts);return;}
+                if(success === ERR_NOT_ENOUGH_ENERGY){parts.pop();}
+                if(success === ERR_BUSY){return;}
+                if(parts.length < 3){return;}
+            }
+
         }
 
     }

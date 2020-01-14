@@ -86,17 +86,18 @@ module.exports =
 
         if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length > 3)
         {
-            let miner_parts = Array.from(spawn.room.memory.miner_parts);
+
+            let parts = Array.from(spawn.room.memory.miner_parts);
             let part_length = Object.keys(spawn.room.memory.miner_parts).length - 1;
 
             for (let i = 0; i < part_length; i++)
             {
-                let success = spawn.spawnCreep(miner_parts,
+                let success = spawn.spawnCreep(parts,
                     spawn.name + '-' + 'Miner' + '-' + Game.time);
-                if(success === OK){console.log("Spawning Miner: ", spawn.room.memory.miner_parts);return;}
-                if(success === ERR_NOT_ENOUGH_ENERGY){miner_parts.pop();}
+                if(success === OK){console.log("Spawning Miner: ", parts);return;}
+                if(success === ERR_NOT_ENOUGH_ENERGY){parts.pop();}
                 if(success === ERR_BUSY){return;}
-                if(miner_parts.length < 3){return;}
+                if(parts.length < 3){return;}
             }
         }
     }

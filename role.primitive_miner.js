@@ -53,7 +53,8 @@ module.exports =
                     creep.memory.mining = false;
                 }
 
-                if(dropped_energy[0] && creep.pickup(dropped_energy[0]) === ERR_NOT_IN_RANGE)
+                if(dropped_energy[0] && dropped_energy[0].amount > creep.carryCapacity &&
+                    creep.pickup(dropped_energy[0]) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(dropped_energy[0]);
                 }

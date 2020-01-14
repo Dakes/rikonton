@@ -132,11 +132,20 @@ module.exports =
             if (name.includes('Carrier-')) { current_creeps++;}
         }
 
-        // only spawn road constructor, if there are at least 5 other creeps and no road constructor
         if(current_creeps < total_creep_count && Object.keys(Game.creeps).length > 6)
         {
-            let name = spawn.name + '-' + 'Carrier' + '-' + Game.time;
-            spawn.spawnCreep([CARRY, CARRY, CARRY, CARRY, MOVE], name);
+            let parts = [MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY,
+                CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY];
+            let part_length = Object.keys(parts).length - 1;
+
+            for (let i = 0; i < part_length; i++)
+            {
+                let success = spawn.spawnCreep(parts, spawn.name + '-' + 'Carrier' + '-' + Game.time);
+                if(success === OK){console.log("Spawning Carrier: ", parts);return;}
+                if(success === ERR_NOT_ENOUGH_ENERGY){parts.pop();}
+                if(success === ERR_BUSY){return;}
+                if(parts.length < 4){return;}
+            }
         }
 
 
