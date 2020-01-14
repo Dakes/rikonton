@@ -22,15 +22,27 @@ module.exports =
 
             if(creep.memory.mining)
             {
-                // first check if sources are dropped
-                let dropped_energy = spawn.room.find(FIND_DROPPED_RESOURCES, {
-                    filter: function(object){return object === RESOURCE_ENERGY;}
-                });
+                let dropped = spawn.room.find(FIND_DROPPED_RESOURCES);
+
+                // first check if energy is dropped
+                let dropped_energy = [];
+                for (let i in dropped)
+                {
+                    if (dropped[i].resourceType === "energy")
+                    {
+                        dropped_energy.push(dropped[i]);
+                    }
+                }
 
                 // pickup dropped minerals
-                let dropped_resources = spawn.room.find(FIND_DROPPED_RESOURCES, {
-                    filter: function(object){return object.resourceType !== RESOURCE_ENERGY;}
-                });
+                let dropped_resources = [];
+                for (let i in dropped)
+                {
+                    if (dropped[i].resourceType !== "energy")
+                    {
+                        dropped_resources.push(dropped[i]);
+                    }
+                }
 
                 if(dropped_resources[0] && creep.pickup(dropped_resources[0]) === ERR_NOT_IN_RANGE)
                 {
@@ -41,11 +53,11 @@ module.exports =
                     creep.memory.mining = false;
                 }
 
-
-                if(creep.pickup(dropped_energy) === ERR_NOT_IN_RANGE)
+                if(dropped_energy[0] && creep.pickup(dropped_energy[0]) === ERR_NOT_IN_RANGE)
                 {
-                    creep.moveTo(dropped_energy);
+                    creep.moveTo(dropped_energy[0]);
                 }
+
                 else if(sources.length >= 2)
                 {
                     if(creep.harvest(sources[creep.memory.source]) === ERR_NOT_IN_RANGE)

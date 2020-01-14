@@ -184,7 +184,7 @@ module.exports = {
 
 
 
-            // Creep Code ------------------------------------------------------
+            // Creep Code ----------------------------------------------------------------------------------------------
 
             // before building, check if creep has energy
 
@@ -192,6 +192,12 @@ module.exports = {
             catch(e){creep.memory.building = false;}
             try{creep.memory.road_repair_prev.valueOf()}
             catch(e){creep.memory.road_repair_prev = false;}
+
+            // check if creep is empty and creep.memory.building is true (bug) and set to false
+            if (creep.memory.building === true && creep.carry[RESOURCE_ENERGY] === 0)
+            {
+                creep.memory.building = false;
+            }
 
             // get energy from storage
             if(spawn.room.storage && creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) &&
@@ -202,9 +208,11 @@ module.exports = {
                     creep.moveTo(spawn.room.storage);
                 }
             }
+            // get energy from spawn
             else if((spawn.store[RESOURCE_ENERGY] > 290) &&
                 creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.building === false)
             {
+
                 if(creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(spawn);

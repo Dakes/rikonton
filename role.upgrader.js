@@ -11,10 +11,10 @@ module.exports =
                 if (!name.includes("Upgrader-")) {continue;}
                 let creep = Game.creeps[name];
 
-                try{creep.memory.delivering.valueOf()}
-                catch(e){creep.memory.delivering = false;}
-
-                if(creep.memory.delivering === false && creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10))
+                // try{creep.memory.delivering.valueOf()}
+                // catch(e){creep.memory.delivering = false;}
+/*creep.memory.delivering === false && */
+                if(/*creep.memory.delivering === false && */creep.carry[RESOURCE_ENERGY] === 0)
                 {
                     if(Object.keys(Game.creeps).length < 3){return;}
                     if(creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE &&
@@ -24,7 +24,7 @@ module.exports =
                     }
 
                     else if((spawn.store[RESOURCE_ENERGY] > 290) &&
-                        creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.delivering === false)
+                        creep.carry[RESOURCE_ENERGY] === 0 /*&& creep.memory.delivering === false*/)
                     {
                         if(creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                         {
@@ -33,28 +33,26 @@ module.exports =
                     }
 
 
-                    if(creep.energy > creep.energyCapacity - 10)
+                    /*if(creep.energy > creep.energyCapacity - 10)
                     {
                         creep.memory.delivering = true;
                     }
                     if(creep.energy < creep.energyCapacity - 10)
                     {
                         creep.memory.delivering = true;
-                    }
+                    }*/
                 }
                 else
                 {
-                    let structures = spawn.room.find(FIND_MY_STRUCTURES);
-
                     if (creep.upgradeController(creep.room.controller) === ERR_NOT_IN_RANGE)
                     {
                         creep.moveTo(creep.room.controller);
                     }
 
-                    if(creep.carry[RESOURCE_ENERGY] === 0)
+                    /*if(creep.carry[RESOURCE_ENERGY] === 0)
                     {
                         creep.memory.delivering = false;
-                    }
+                    }*/
                 }
 
 
@@ -64,7 +62,7 @@ module.exports =
         {
             console.log("error in Upgrader");
             console.log(e);
-            creep.memory.delivering = false;
+            // creep.memory.delivering = false;
         }
 
 
