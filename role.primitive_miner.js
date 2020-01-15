@@ -120,7 +120,7 @@ module.exports =
             if (name.includes('Miner-')) { miner_creeps++;}
         }
 
-        if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length < 13)
+        if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length < 15)
         {
             spawn.spawnCreep([MOVE, WORK, CARRY, CARRY, CARRY],
             spawn.name + '-' + 'Primitive_miner' + '-' + Game.time);

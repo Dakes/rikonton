@@ -26,14 +26,18 @@ module.exports =
                 {
                     let source = sources[i];
                     // iterate through miners, next if miner has source id
-                    for (let name in Game.creeps)
+                    let occupied = false;
+                    for (let name2 in Game.creeps)
                     {
-                        if (!name.includes("Miner-")){continue;}
-                        if(Game.creeps[name].memory.source_id === source.id){continue;}
+                        if (!name2.includes("Miner-")){continue;}
+                        if(Game.creeps[name2].memory.source_id === source.id){occupied = true;}
+                    }
+                    if(occupied === false)
+                    {
                         creep.memory.source_id = source.id;
                         break;
                     }
-                    if (creep.memory.source_id !== false){break;}
+                    // if (creep.memory.source_id !== false){break;}
                 }
             }
 
@@ -58,7 +62,7 @@ module.exports =
             spawn.room.memory.miner_parts = false;
         }
 
-        if (spawn.room.memory.miner_parts === false || Object.keys(spawn.room.memory.miner_parts).length < 3)
+        if (spawn.room.memory.miner_parts === false || Object.keys(spawn.room.memory.miner_parts).length < 4)
         {
             console.log("recalculating miner_parts");
             let source = sources[0];
