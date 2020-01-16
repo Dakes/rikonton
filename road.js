@@ -25,7 +25,7 @@ module.exports = {
         }*/
 
 
-        //Memory.road_build_counter = 99999;Memory.road_calculate_counter = 99999;spawn.room.memory.tower_set = false;
+        // Memory.road_build_counter = 99999;Memory.road_calculate_counter = 99999;spawn.room.memory.tower_set = false;
 
         let total_creep_count = 1;
 
@@ -128,9 +128,6 @@ module.exports = {
                                 }
                             }
 
-
-
-
                             // let path = tower.pos.findPathTo(FIND_MY_STRUCTURES, {filter: function(object) {return object.structureType === "road"}});
                             // let path = tower.pos.findPathTo(spawn.pos);  // working
                             // console.log(path);
@@ -157,14 +154,14 @@ module.exports = {
                             //console.log("creating construction site");
                             spawn.room.createConstructionSite
                             (Memory.road_array[i][2][j].x,Memory.road_array[i][2][j].y, STRUCTURE_ROAD);
-                            Memory.road_build_counter = 0;
                         }
                     }
+                    Memory.road_build_counter = 0;
                     // delete accidentally built tunnels
                     let construction_sites = spawn.room.find(FIND_CONSTRUCTION_SITES);
                     for (let site of construction_sites)
                     {
-                        if (site.structureType === STRUCTURE_ROAD && site.progressTotal > 300)
+                        if (site.structureType === STRUCTURE_ROAD && site.progressTotal > 1501)
                         {
                             site.remove();
                         }

@@ -22,19 +22,60 @@ module.exports =
 
             if(creep.memory.mining)
             {
+                // pickup from ruins
+                let ruins = spawn.room.find(FIND_RUINS);
+                let ruin = false;
+                for (let i in ruins)
+                {
+                    if (ruins[i] && ruins[i].store.getUsedCapacity([RESOURCE_ENERGY]) > 0)
+                    {
+                        ruin = ruins[i];
+                        break;
+                    }
+                }
+                if(ruin)
+                {
+                    if(creep.withdraw(ruin, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    {
+                        creep.moveTo(ruin);
+                    }
+                }
+
+                // pickup from Tombstones
+                let tombstones = spawn.room.find(FIND_RUINS);
+                let tombstone = false;
+                for (let i in tombstones)
+                {
+                    if (tombstone[i] && tombstone[i].store.getUsedCapacity([FIND_TOMBSTONES]) > 0)
+                    {
+                        tombstone = tombstones[i];
+                        break;
+                    }
+                }
+                if(tombstone)
+                {
+                    if(creep.withdraw(tombstone, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    {
+                        creep.moveTo(tombstone);
+                    }
+                }
+
                 let dropped = spawn.room.find(FIND_DROPPED_RESOURCES);
 
-                // first check if energy is dropped
-                let dropped_energy = [];
+                // get largest dropped energy stack
+                let dropped_energy = false;
                 for (let i in dropped)
                 {
                     if (dropped[i].resourceType === "energy")
                     {
-                        dropped_energy.push(dropped[i]);
+                        if(!dropped_energy || dropped[i].amount > dropped_energy.amount)
+                        {
+                            dropped_energy = dropped[i];
+                        }
                     }
                 }
 
-                // pickup dropped minerals
+                // get dropped minerals
                 let dropped_resources = [];
                 for (let i in dropped)
                 {
@@ -44,32 +85,34 @@ module.exports =
                     }
                 }
 
+                // pickup dropped minerals
                 if(dropped_resources[0] && creep.pickup(dropped_resources[0]) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(dropped_resources[0]);
                 }
+                // pickup dropped energy
+                if(dropped_energy && dropped_energy.amount > creep.carryCapacity &&
+                    creep.pickup(dropped_energy) === ERR_NOT_IN_RANGE)
+                {
+                    creep.moveTo(dropped_energy);
+                }
+
+
                 if(creep.carry === creep.carryCapacity)
                 {
                     creep.memory.mining = false;
                 }
-
-                if(dropped_energy[0] && dropped_energy[0].amount > creep.carryCapacity &&
-                    creep.pickup(dropped_energy[0]) === ERR_NOT_IN_RANGE)
-                {
-                    creep.moveTo(dropped_energy[0]);
-                }
-
-                else if(sources.length >= 2)
+                else if(sources.length >= 2 && dropped_energy.amount < creep.carryCapacity)
                 {
                     if(creep.harvest(sources[creep.memory.source]) === ERR_NOT_IN_RANGE)
                     {
                        creep.moveTo(sources[creep.memory.source]);
                     }
                 }
-                else if(creep.harvest(sources[0]) === ERR_NOT_IN_RANGE)
+                /*else if(creep.harvest(sources[0]) === ERR_NOT_IN_RANGE)
                 {
                    creep.moveTo(sources[0]);
-                }
+                }*/
                 if(creep.carry[RESOURCE_ENERGY] === creep.carryCapacity)
                 {
                     creep.memory.mining = false;
@@ -86,11 +129,20 @@ module.exports =
                     }
                 }
 
-                if(spawn.energy < spawn.energyCapacity)
+                // unload to spawn
+                if(spawn.energy < spawn.energyCapacity - 5)
                 {
                     if(creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
                        creep.moveTo(spawn);
+                    }
+                }
+                // unload to storage, if exists
+                else if(spawn.room.storage && spawn.room.storage.store.getFreeCapacity() > 500)
+                {
+                    if(creep.transfer(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    {
+                       creep.moveTo(spawn.room.storage);
                     }
                 }
                 else
@@ -117,7 +169,7 @@ module.exports =
         for (let name in Game.creeps)
         {
             if (name.includes('Primitive_miner')) { miner_creeps++;}
-            if (name.includes('Miner-')) { miner_creeps++;}
+            // if (name.includes('Miner-')) { miner_creeps++;}
         }
 
         if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length < 15)

@@ -29,8 +29,28 @@ module.exports =
                 if(creep.memory.delivering === false && creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10))
                 {
                     if(Object.keys(Game.creeps).length < 3){return;}
+
+                    // pickup from ruins
+                    let ruins = spawn.room.find(FIND_RUINS);
+                    let ruin = false;
+                    for (let i in ruins)
+                    {
+                        if (ruins[i] && ruins[i].store.getUsedCapacity([RESOURCE_ENERGY]) > 0)
+                        {
+                            ruin = ruins[i];
+                            break;
+                        }
+                    }
+                    if(ruin)
+                    {
+                        if(creep.withdraw(ruin, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                        {
+                            creep.moveTo(ruin);
+                        }
+                    }
+
                     // withdraw from storage
-                    if(spawn.room.storage && creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    else if(spawn.room.storage && creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
                         creep.moveTo(spawn.room.storage);
                     }
@@ -144,7 +164,7 @@ module.exports =
                 if(success === OK){console.log("Spawning Carrier: ", parts);return;}
                 if(success === ERR_NOT_ENOUGH_ENERGY){parts.pop();}
                 if(success === ERR_BUSY){return;}
-                if(parts.length < 4){return;}
+                if(parts.length < 6){return;}
             }
         }
 

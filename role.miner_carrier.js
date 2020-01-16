@@ -41,18 +41,18 @@ module.exports =
             }
             else
             {
-                if(spawn.energy < spawn.energyCapacity)
-                {
-                    if(creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
-                    {
-                       creep.moveTo(spawn);
-                    }
-                }
-                if(spawn.room.storage && spawn.room.storage.store[RESOURCE_ENERGY] < spawn.room.storage.storeCapacity)
+                if(spawn.room.storage && spawn.room.storage.store.getFreeCapacity > 500)
                 {
                     if(creep.transfer(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
                        creep.moveTo(spawn.room.storage);
+                    }
+                }
+                else if(spawn.energy < spawn.energyCapacity)
+                {
+                    if(creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    {
+                       creep.moveTo(spawn);
                     }
                 }
 
@@ -70,7 +70,7 @@ module.exports =
         {
             if (name.includes('Miner_carrier')) { current_creeps++;}
         }
-        if(current_creeps < total_creep_count && Object.keys(Game.creeps).toString().includes("Miner-"))
+        if(Object.keys(Game.creeps).toString().includes("Miner-") && current_creeps < total_creep_count)
         {
             let parts = [MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY,
                 CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY];
@@ -82,7 +82,7 @@ module.exports =
                 if(success === OK){console.log("Spawning Miner Carrier: ", parts);return;}
                 if(success === ERR_NOT_ENOUGH_ENERGY){parts.pop();}
                 if(success === ERR_BUSY){return;}
-                if(parts.length < 3){return;}
+                if(parts.length < 6){return;}
             }
 
         }
