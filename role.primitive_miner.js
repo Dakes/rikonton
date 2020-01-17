@@ -91,16 +91,26 @@ module.exports =
                     creep.moveTo(dropped_resources[0]);
                 }
                 // pickup dropped energy
-                if(dropped_energy && dropped_energy.amount > creep.carryCapacity &&
-                    creep.pickup(dropped_energy) === ERR_NOT_IN_RANGE)
+
+                if(dropped_energy && dropped_energy.amount > creep.carryCapacity && creep.memory.dropped_energy === false)
                 {
-                    creep.moveTo(dropped_energy);
+                    creep.memory.dropped_energy = dropped_energy
+                }
+                if(creep.memory.dropped_energy &&
+                    Game.getObjectById(creep.memory.dropped_energy.id).amount > creep.carryCapacity &&
+                    creep.pickup(Game.getObjectById(creep.memory.dropped_energy.id)) === ERR_NOT_IN_RANGE)
+                {
+                    creep.moveTo(Game.getObjectById(creep.memory.dropped_energy.id));
                 }
 
 
                 if(creep.carry === creep.carryCapacity)
                 {
                     creep.memory.mining = false;
+                }
+                if(creep.memory.dropped_energy && creep.memory.dropped_energy.amount < 20)
+                {
+                    creep.memory.dropped_energy = false;
                 }
                 else if(sources.length >= 2 && dropped_energy.amount < creep.carryCapacity)
                 {
@@ -175,7 +185,9 @@ module.exports =
         if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length < 15)
         {
             spawn.spawnCreep([MOVE, WORK, CARRY, CARRY, CARRY],
-            spawn.name + '-' + 'Primitive_miner' + '-' + Game.time);
+            spawn.name + '-' + 'Primitive_miner' + '-' + Game.time, {
+                memory: {dropped_energy: false, mining: true}
+            });
         }
 
 

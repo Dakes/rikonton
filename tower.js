@@ -33,12 +33,11 @@ module.exports =
                     let y_total = 0;
 
                     let exit_coord = spawn.room.find(directions[i])
-                    if(exit_coord.lenght !== 0)
+                    if(exit_coord.length > 0)
                     {
                         // TODO: get room level, calc number of max turrets compare, recalculate at room level increase
 
-                        //console.log("in if 2");
-                        spawn.room.memory.turret_positions = []; // array of coordinate
+                        spawn.room.memory.turret_array = []; // array of coordinate
                         for(let element in exit_coord)
                         {
                             count++;
@@ -54,7 +53,7 @@ module.exports =
                         }
                         else if(directions[i] === FIND_EXIT_TOP)
                         {
-                            y_coord = y_coord - 5;
+                            y_coord = y_coord + 5;
                         }
                         else if(directions[i] === FIND_EXIT_RIGHT)
                         {
@@ -62,13 +61,13 @@ module.exports =
                         }
                         else if(directions[i] === FIND_EXIT_BOTTOM)
                         {
-                            y_coord = y_coord + 5;
+                            y_coord = y_coord - 5;
                         }
                         spawn.room.memory.turret_array.push([x_coord, y_coord]);
                         spawn.room.createConstructionSite(x_coord, y_coord, STRUCTURE_TOWER);
 
 
-                        spawn.room.memroy.turrets_set = true;
+                        spawn.room.memory.turrets_set = true;
                     }
 
                 }
@@ -77,6 +76,7 @@ module.exports =
         catch(e)
         {
             spawn.room.memory.turret_array = [];
+            spawn.room.memory.turrets_set = false;
         }
 
         // build every 5000 ticks in case they were destroyed
@@ -96,6 +96,7 @@ module.exports =
         if(hostiles.length > 0)
         {
             let username = hostiles[0].owner.username;
+            console.log("hostile creep detected. By: ", username);
             let towers = spawn.room.find(
                 FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
                 towers.forEach(tower => tower.attack(hostiles[0]));
