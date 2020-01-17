@@ -96,7 +96,7 @@ module.exports =
                 {
                     creep.memory.dropped_energy = dropped_energy
                 }
-                if(creep.memory.dropped_energy &&
+                if(creep.memory.dropped_energy && Game.getObjectById(creep.memory.dropped_energy.id) &&
                     Game.getObjectById(creep.memory.dropped_energy.id).amount > creep.carryCapacity &&
                     creep.pickup(Game.getObjectById(creep.memory.dropped_energy.id)) === ERR_NOT_IN_RANGE)
                 {

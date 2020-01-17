@@ -27,9 +27,24 @@ module.exports =
             if(creep.memory.collecting)
             {
                 // first check if sources are dropped
-                let dropped_energy = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
+                /*let dropped_energy = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
                     filter: (dropped_energy) => dropped_energy.resourceType === RESOURCE_ENERGY
-                });
+                });*/
+
+                // get largest dropped stack
+                let dropped_energy = false;
+                let dropped = spawn.room.find(FIND_DROPPED_RESOURCES);
+                for (let i in dropped)
+                {
+                    if (dropped[i].resourceType === "energy")
+                    {
+                        if(!dropped_energy || dropped[i].amount > dropped_energy.amount)
+                        {
+                            dropped_energy = dropped[i];
+                        }
+                    }
+                }
+
                 if(creep.pickup(dropped_energy) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(dropped_energy);
@@ -39,16 +54,17 @@ module.exports =
                     creep.memory.collecting = false;
                 }
             }
+            // deliver energy
             else
             {
-                if(spawn.room.storage && spawn.room.storage.store.getFreeCapacity > 500)
+                if(spawn.room.storage && spawn.room.storage.store.getFreeCapacity() > 500)
                 {
                     if(creep.transfer(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
                        creep.moveTo(spawn.room.storage);
                     }
                 }
-                else if(spawn.energy < spawn.energyCapacity)
+                else if(spawn.store[RESOURCE_ENERGY] < spawn.store.getCapacity(RESOURCE_ENERGY))
                 {
                     if(creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
