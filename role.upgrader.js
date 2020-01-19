@@ -73,9 +73,9 @@ module.exports =
             if (name.includes('Upgrader-')) { current_creeps++;}
         }
 
-        // increase total creep count if there are enough creeps
-        // if(Object.keys(Game.creeps).length >= 15){total_creep_count = 2;}
-        // if(Object.keys(Game.creeps).length >= 20){total_creep_count = 3;}
+        // increase total creep count if there is enough energy in storage
+        if(spawn.room.storage.store[RESOURCE_ENERGY] > 250000){total_creep_count = 2;}
+        if(spawn.room.storage.store[RESOURCE_ENERGY] > 500000){total_creep_count = 3;}
 
         // only spawn upgrader, if there are at least 5 other creeps
         if(current_creeps < total_creep_count && Object.keys(Game.creeps).length > 7)
