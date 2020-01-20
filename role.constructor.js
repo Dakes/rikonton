@@ -31,16 +31,13 @@ module.exports = {
                     if(Object.keys(Game.creeps).length < 5){return;}
 
 
-                    if(creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    if(spawn.room.storage && creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    {
+                       creep.moveTo(spawn.room.storage);
+                    }
+                    else if(creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
                        creep.moveTo(spawn);
-                    }
-                    else
-                    {
-                        if(creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10))
-                        {
-
-                        }
                     }
                 }
                 else

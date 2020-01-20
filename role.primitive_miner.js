@@ -5,7 +5,7 @@ module.exports =
         let total_creep_count = 10;
 
         let sources = spawn.room.find(FIND_SOURCES);
-
+        if(sources.length === 1){total_creep_count = 3}
 
         for(let name in Game.creeps)
         {
@@ -18,6 +18,10 @@ module.exports =
                 let time = Game.time;
                 if (time % 2 === 0){ creep.memory.source = 0; }
                 else{ creep.memory.source = 1; }
+            }
+            if(creep.memory.dropped_energy && Game.getObjectById(creep.memory.dropped_energy.id) == null)
+            {
+                creep.memory.dropped_energy = false;
             }
 
             if(creep.memory.mining)

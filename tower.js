@@ -11,11 +11,20 @@ module.exports =
 {
     run(spawn)
     {
+        // spawn.room.memory.turrets_set = false;
         // define range of tower
         // let range = 15;
         try{spawn.room.memory.turrets_set;}      // boolean
         catch(e){spawn.room.memory.turrets_set = false;}
 
+        try{spawn.room.memory.level_turrets.valueOf();}
+        catch(e){spawn.room.memory.level_turrets = 0;}
+
+        if(spawn.room.memory.level_turrets < spawn.room.controller.level)
+        {
+            spawn.room.memory.turrets_set = false;
+            spawn.room.memory.level_turrets = spawn.room.controller.level;
+        }
 
         // BUILDING CONSTRUCTION SITE
         // get exits to each side
@@ -26,18 +35,20 @@ module.exports =
         {
             if(!spawn.room.memory.turrets_set)
             {
+                spawn.room.memory.turret_array = []; // array of coordinate
+                let spawn_coord = [spawn.pos.x, spawn.pos.y];
+                spawn.room.memory.turret_array.push([spawn_coord[0], spawn_coord[1] - 4]);
                 for(let i in directions)
                 {
                     let count = 0;
                     let x_total = 0;
                     let y_total = 0;
 
-                    let exit_coord = spawn.room.find(directions[i])
+                    let exit_coord = spawn.room.find(directions[i]);
                     if(exit_coord.length > 0)
                     {
                         // TODO: get room level, calc number of max turrets compare, recalculate at room level increase
 
-                        spawn.room.memory.turret_array = []; // array of coordinate
                         for(let element in exit_coord)
                         {
                             count++;
@@ -64,12 +75,14 @@ module.exports =
                             y_coord = y_coord - 5;
                         }
                         spawn.room.memory.turret_array.push([x_coord, y_coord]);
-                        spawn.room.createConstructionSite(x_coord, y_coord, STRUCTURE_TOWER);
-
-
-                        spawn.room.memory.turrets_set = true;
                     }
 
+                }
+                spawn.room.memory.turrets_set = true;
+                for(let i in spawn.room.memory.turret_array)
+                {
+                    spawn.room.createConstructionSite(
+                        spawn.room.memory.turret_array[i][0], spawn.room.memory.turret_array[i][1], STRUCTURE_TOWER);
                 }
             }
         }
