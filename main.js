@@ -19,11 +19,11 @@ module.exports.loop = function()
     let structures = require("structures");
 
 
-
-    for(let i in Game.spawns)
+    for(let i in Game.rooms)
     {
-        let spawn = Game.spawns[i];
-
+        let room = Game.rooms[i];
+        // get the first spawn in room
+        let spawn = room.find(FIND_MY_SPAWNS)[0];
 
         defenders.run(spawn);
         primitive_miners.run(spawn);
@@ -36,7 +36,6 @@ module.exports.loop = function()
         roads.run(spawn);
         towers.run(spawn);
         structures.run(spawn);
-
 
     }
 

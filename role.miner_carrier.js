@@ -34,6 +34,10 @@ module.exports =
                 // get largest dropped stack
                 let dropped_energy = false;
                 let dropped = spawn.room.find(FIND_DROPPED_RESOURCES);
+
+                // prevent deadlocks
+                if (!dropped){creep.memory.collecting = false;}
+
                 for (let i in dropped)
                 {
                     if (dropped[i].resourceType === "energy")
@@ -57,18 +61,19 @@ module.exports =
             // deliver energy
             else
             {
-                if(spawn.room.storage && spawn.room.storage.store.getFreeCapacity() > 500)
-                {
-                    if(creep.transfer(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
-                    {
-                       creep.moveTo(spawn.room.storage);
-                    }
-                }
-                else if(spawn.store[RESOURCE_ENERGY] < spawn.store.getCapacity(RESOURCE_ENERGY))
+
+                if(spawn.store[RESOURCE_ENERGY] < spawn.store.getCapacity(RESOURCE_ENERGY))
                 {
                     if(creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
                        creep.moveTo(spawn);
+                    }
+                }
+                else if(spawn.room.storage && spawn.room.storage.store.getFreeCapacity() > 500)
+                {
+                    if(creep.transfer(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    {
+                       creep.moveTo(spawn.room.storage);
                     }
                 }
 

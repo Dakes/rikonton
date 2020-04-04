@@ -108,8 +108,8 @@ module.exports = {
         // only spawn constructor, if there are at least 7 other creeps
         if(builder_creeps < total_creep_count && Object.keys(Game.creeps).length > 7)
         {
-            let parts = [CARRY, CARRY, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK, CARRY, CARRY, WORK, MOVE,
-                CARRY, WORK, CARRY, CARRY, WORK, MOVE, CARRY, CARRY, MOVE, CARRY, WORK, MOVE, CARRY, WORK, MOVE];
+            let parts = [CARRY, CARRY, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, CARRY, WORK, CARRY, CARRY, WORK, MOVE,
+                CARRY, CARRY, WORK, CARRY, CARRY, WORK, MOVE, CARRY, CARRY, MOVE, CARRY, WORK, MOVE, CARRY, WORK, MOVE];
             let part_length = Object.keys(parts).length - 1;
 
             for (let i = 0; i < part_length; i++)
