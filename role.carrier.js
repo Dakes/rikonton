@@ -12,6 +12,7 @@ module.exports =
     run(spawn)
     {
         let total_creep_count = 1;
+        if(Object.keys(Game.creeps).length > 12){total_creep_count = 2}
 
         // TODO: only build if total creep count > 5
 

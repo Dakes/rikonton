@@ -85,7 +85,7 @@ module.exports =
 
         // check length of container_pos and build if less containers are found
         // TODO: check if built already
-        for(i in spawn.room.memory.container_pos)
+        for(let i in spawn.room.memory.container_pos)
         {
             let pos = spawn.room.memory.container_pos[i];
             spawn.room.createConstructionSite(pos[0].x, pos[0].y, STRUCTURE_CONTAINER);
