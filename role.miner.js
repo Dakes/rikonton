@@ -50,6 +50,7 @@ module.exports =
                     let container_pos = new RoomPosition(container[0].x, container[0].y , container[0].roomName);
                     if(container[1] === creep.memory.source_id)
                     {
+                        // TODO: kill creep, blocking container
                         if (creep.pos.x === container_pos.x && creep.pos.y === container_pos.y)
                         {
                             creep.harvest(source);

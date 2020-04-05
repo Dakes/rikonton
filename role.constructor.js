@@ -17,6 +17,9 @@ module.exports = {
             if (!name.includes("Constructor")) {continue;}
             let creep = Game.creeps[name];
 
+            try{creep.memory.building.valueOf();}
+            catch(e){creep.memory.building = false;console.log("resetting memory building");}
+
 
             // Creep Code ------------------------------------------------------
             try
@@ -39,6 +42,10 @@ module.exports = {
                     {
                        creep.moveTo(spawn);
                     }
+                    if(creep.store[RESOURCE_ENERGY] === creep.store.getCapacity(RESOURCE_ENERGY))
+                    {
+                        creep.memory.building = true;
+                    }
                 }
                 else
                 {
@@ -51,7 +58,7 @@ module.exports = {
                             {
                                 creep.moveTo(constSites[siteName]);
                             }
-                            if(creep.carry[RESOURCE_ENERGY] === 0)
+                            if(creep.store[RESOURCE_ENERGY] === 0)
                             {
                                 creep.memory.building = false;
                             }
@@ -65,7 +72,7 @@ module.exports = {
 
                     let to_repair = creep.pos.findClosestByRange(
                         FIND_STRUCTURES, {
-                            filter: function(object){return !(object.structureType === STRUCTURE_ROAD) && (object.hits < object.hitsMax / 2);
+                            filter: function(object){return object.structureType !== STRUCTURE_ROAD && (object.hits < object.hitsMax / 2);
                         }
                     });
 
@@ -74,6 +81,10 @@ module.exports = {
                         if(creep.repair(to_repair) === ERR_NOT_IN_RANGE)
                         {
                             creep.moveTo(to_repair);
+                        }
+                        if(creep.store[RESOURCE_ENERGY] === 0)
+                        {
+                            creep.memory.building = false;
                         }
                     }
                     // nothing to repair, move to idle position

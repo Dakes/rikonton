@@ -76,7 +76,7 @@ module.exports =
                 //Game.spawns["New New Orleans"].room.visual.circle(pos, {fill: 'transparent', radius: 0.55, stroke: 'red'});
             }
             // build containers for the first time
-            for(i in spawn.room.memory.container_pos)
+            for(let i in spawn.room.memory.container_pos)
             {
                 let pos = spawn.room.memory.container_pos[i];
                 spawn.room.createConstructionSite(pos.x, pos.y, STRUCTURE_CONTAINER);

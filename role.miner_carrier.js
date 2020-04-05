@@ -13,24 +13,81 @@ module.exports =
     run(spawn)
     {
         let sources = spawn.room.find(FIND_SOURCES);
-        let total_creep_count = Object.keys(sources).length * 1.5;
+        let total_creep_count = Object.keys(sources).length * 1;
 
         for(let name in Game.creeps)
         {
             if (!name.includes("Miner_carrier")){continue;}
             let creep = Game.creeps[name];
 
-            try{creep.memory.collecting;}
+            try{creep.memory.collecting.valueOf();}
             catch(e){creep.memory.collecting = true;}
 
+            // set source in memory
+            try{creep.memory.source_id.valueOf();}
+            catch(e){creep.memory.source_id = false;}
+
+            let sources = spawn.room.find(FIND_SOURCES);
+            if(creep.memory.source_id === false)
+            {
+                for (let i in sources)
+                {
+                    let source = sources[i];
+                    // iterate through miners, next if miner has source id
+                    let occupied = false;
+                    for (let name2 in Game.creeps)
+                    {
+                        if (!name2.includes("Miner_carrier")){continue;}
+                        if(Game.creeps[name2].memory.source_id === source.id){occupied = true;}
+                    }
+                    if(occupied === false)
+                    {
+                        creep.memory.source_id = source.id;
+                        break;
+                    }
+                }
+            }
 
             if(creep.memory.collecting)
             {
-                // first check if sources are dropped
-                /*let dropped_energy = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
-                    filter: (dropped_energy) => dropped_energy.resourceType === RESOURCE_ENERGY
-                });*/
+                // first check, if container is full enough
+                for(let i in spawn.room.memory.container_pos)
+                {
+                    let container_source = spawn.room.memory.container_pos[i];
+                    if(container_source[1] === creep.memory.source_id)
+                    {
+                        // identify container with the position
+                        let containers = spawn.room.find(
+                        FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}});
+                        // console.log(containers);
+                        for(let j in containers)
+                        {
+                            let container = containers[j];
+                            console.log(container.pos.x);
+                            if (container.pos.x === container_source[0].x && container.pos.y === container_source[0].y)
+                            {
+                                console.log("here");
+                                if(container.store[RESOURCE_ENERGY] > creep.store.getCapacity(RESOURCE_ENERGY) ||
+                                container.store[RESOURCE_ENERGY] === container.store.getCapacity(RESOURCE_ENERGY))
+                                {
+                                    if(creep.withdraw(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                                    {
+                                       creep.moveTo(container);
+                                    }
+                                    else if(creep.store[RESOURCE_ENERGY] === creep.store.getCapacity(RESOURCE_ENERGY))
+                                    {
+                                        creep.memory.collecting = false;
+                                    }
 
+                                }
+                            }
+                        }
+
+                    }
+                }
+
+                // console.log("picking up dropped");
+                //else pick up any dropped energy
                 // get largest dropped stack
                 let dropped_energy = false;
                 let dropped = spawn.room.find(FIND_DROPPED_RESOURCES);
