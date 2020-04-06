@@ -18,7 +18,10 @@ module.exports = {
             let creep = Game.creeps[name];
 
             try{creep.memory.building.valueOf();}
-            catch(e){creep.memory.building = false;console.log("resetting memory building");}
+            catch(e){creep.memory.building = false;}
+
+            try{creep.memory.repair_id.valueOf();}
+            catch(e){creep.memory.building = false;}
 
 
             // Creep Code ------------------------------------------------------
@@ -76,8 +79,15 @@ module.exports = {
                         }
                     });
 
-                    if(to_repair)
+                    if(to_repair && creep.memory.repair_id === false)
                     {
+                        creep.memory.repair_id = to_repair.id;
+                    }
+
+                    if(creep.memory.repair_id)
+                    {
+                        to_repair = Game.getObjectById(creep.memory.repair_id);
+
                         if(creep.repair(to_repair) === ERR_NOT_IN_RANGE)
                         {
                             creep.moveTo(to_repair);
@@ -85,6 +95,10 @@ module.exports = {
                         if(creep.store[RESOURCE_ENERGY] === 0)
                         {
                             creep.memory.building = false;
+                        }
+                        if(to_repair.hits > to_repair.hitsMax - 200)
+                        {
+                            creep.memory.repair_id = false;
                         }
                     }
                     // nothing to repair, move to idle position

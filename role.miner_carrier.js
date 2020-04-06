@@ -57,22 +57,21 @@ module.exports =
                     if(container_source[1] === creep.memory.source_id)
                     {
                         // identify container with the position
-                        let containers = spawn.room.find(
-                        FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}});
-                        // console.log(containers);
+                        let containers = creep.room.find(FIND_STRUCTURES, {
+                        filter: (i) => {return( i.structureType == STRUCTURE_CONTAINER &&
+                                                i.store[RESOURCE_ENERGY] >= 1000)}});
                         for(let j in containers)
                         {
                             let container = containers[j];
-                            console.log(container.pos.x);
                             if (container.pos.x === container_source[0].x && container.pos.y === container_source[0].y)
                             {
-                                console.log("here");
                                 if(container.store[RESOURCE_ENERGY] > creep.store.getCapacity(RESOURCE_ENERGY) ||
                                 container.store[RESOURCE_ENERGY] === container.store.getCapacity(RESOURCE_ENERGY))
                                 {
-                                    if(creep.withdraw(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                                    if(creep.withdraw(Game.getObjectById(container.id), RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                                     {
-                                       creep.moveTo(container);
+                                        creep.moveTo(Game.getObjectById(container.id));
+                                        break;
                                     }
                                     else if(creep.store[RESOURCE_ENERGY] === creep.store.getCapacity(RESOURCE_ENERGY))
                                     {
