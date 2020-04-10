@@ -2,13 +2,18 @@ module.exports =
 {
     run(spawn)
     {
-        let total_creep_count = 10;
+        let total_creep_count = 8;
 
         let sources = spawn.room.find(FIND_SOURCES);
         if(sources.length === 1){total_creep_count = 3}
 
+        let containers = spawn.room.find(FIND_STRUCTURES, {filter: (i) => {return( i.structureType == STRUCTURE_CONTAINER)}});
+        if (containers.length >= 2){total_creep_count -= 3}
+
         for(let name in Game.creeps)
         {
+            if (name.includes("Miner_carrier")){total_creep_count -= 1;}
+            if (name.includes("Miner-")){total_creep_count -= 1;}
             if (!name.includes("Primitive_miner")){continue;}
             let creep = Game.creeps[name];
 

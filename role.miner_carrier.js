@@ -58,8 +58,7 @@ module.exports =
                     {
                         // identify container with the position
                         let containers = creep.room.find(FIND_STRUCTURES, {
-                        filter: (i) => {return( i.structureType == STRUCTURE_CONTAINER &&
-                                                i.store[RESOURCE_ENERGY] >= 1000)}});
+                        filter: (i) => {return( i.structureType == STRUCTURE_CONTAINER)}});
                         for(let j in containers)
                         {
                             let container = containers[j];

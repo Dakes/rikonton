@@ -21,18 +21,19 @@ module.exports = {
             catch(e){creep.memory.building = false;}
 
             try{creep.memory.repair_id.valueOf();}
-            catch(e){creep.memory.building = false;}
+            catch(e){creep.memory.repair_id = false;}
 
 
             // Creep Code ------------------------------------------------------
             try
             {
-                let constSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+                let construction_sites = spawn.room.find(FIND_CONSTRUCTION_SITES);
 
                 // before building, check if creep has energy
 
 
-                if(creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.building === false)
+                if( (creep.store[RESOURCE_ENERGY] < (creep.store.getCapacity(RESOURCE_ENERGY) - 10) && creep.memory.building === false &&
+                   !creep.memory.repair_id) || creep.store[RESOURCE_ENERGY] === 0)
                 {
                     if(Object.keys(Game.creeps).length < 5){return;}
 
@@ -52,14 +53,14 @@ module.exports = {
                 }
                 else
                 {
-                    for (let siteName in constSites)
+                    for (let siteName in construction_sites)
                     {
-                        if(!(constSites[siteName].structureType === "road"))
+                        if(!(construction_sites[siteName].structureType === "road"))
                         {
                             creep.memory.building = true;
-                            if(creep.build(constSites[siteName]) === ERR_NOT_IN_RANGE)
+                            if(creep.build(construction_sites[siteName]) === ERR_NOT_IN_RANGE)
                             {
-                                creep.moveTo(constSites[siteName]);
+                                creep.moveTo(construction_sites[siteName]);
                             }
                             if(creep.store[RESOURCE_ENERGY] === 0)
                             {
