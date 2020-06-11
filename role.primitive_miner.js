@@ -112,7 +112,6 @@ module.exports =
                     creep.moveTo(Game.getObjectById(creep.memory.dropped_energy.id));
                 }
 
-
                 if(creep.carry === creep.carryCapacity)
                 {
                     creep.memory.mining = false;
@@ -128,10 +127,12 @@ module.exports =
                        creep.moveTo(sources[creep.memory.source]);
                     }
                 }
-                /*else if(creep.harvest(sources[0]) === ERR_NOT_IN_RANGE)
+                /*
+                else if(creep.harvest(sources[creep.memory.source]) === ERR_NOT_IN_RANGE)
                 {
-                   creep.moveTo(sources[0]);
-                }*/
+                   creep.moveTo(sources[creep.memory.source]);
+                }
+                */
                 if(creep.carry[RESOURCE_ENERGY] === creep.carryCapacity)
                 {
                     creep.memory.mining = false;
