@@ -78,11 +78,12 @@ module.exports =
                     let structures = spawn.room.find(FIND_MY_STRUCTURES);
                     for (let struct in structures)
                     {
+                        // TODO: use foreach as with towers
                         // DELIVERING TO TOWER
                         if(structures[struct].structureType === "tower")
                         {
                             let tower = structures[struct];
-                            if(tower.energy === tower.energyCapacity){continue;}
+                            if(tower.energy >= tower.energyCapacity/2){continue;}
                             creep.memory.delivering = true;
                             // let test = creep.transfer(towers[tower], RESOURCE_ENERGY);
                             // console.log(test);
@@ -90,7 +91,7 @@ module.exports =
                             {
                                 creep.moveTo(tower);
                             }
-                            if(creep.carry[RESOURCE_ENERGY] === 0)
+                            if(creep.store.getUsedCapacity(RESOURCE_ENERGY) <= 25)
                             {
                                 creep.memory.delivering = false;
                             }
