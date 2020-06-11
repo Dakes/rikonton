@@ -99,15 +99,18 @@ module.exports =
                         }
 
                         // DELIVERING TO EXTENSION
-                        if(structures[struct].structureType === STRUCTURE_EXTENSION)
+                        else if(structures[struct].structureType === STRUCTURE_EXTENSION)
                         {
                             let extension = structures[struct];
-                            if(extension.energy === extension.energyCapacity){continue;}
+                            if(extension.store.getUsedCapacity(RESOURCE_ENERGY) >= extension.store.getCapacity(RESOURCE_ENERGY)){continue;}
                             creep.memory.delivering = true;
+
                             if(creep.transfer(extension, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                             {
                                 creep.moveTo(extension);
                             }
+                            // extension not excessable, f.e. room controller downgrade
+                            else if(creep.transfer(extension, RESOURCE_ENERGY) === ERR_FULL){}
                             if(creep.carry[RESOURCE_ENERGY] === 0)
                             {
                                 creep.memory.delivering = false;
@@ -116,7 +119,7 @@ module.exports =
                         }
 
                         //DELIVERING TO SPAWN
-                        if(spawn.energy < spawn.energyCapacity)
+                        else if(spawn.energy < spawn.energyCapacity)
                         {
                             creep.memory.delivering = true;
                             if(creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
