@@ -46,16 +46,12 @@ module.exports = {
                     {
                        creep.moveTo(spawn);
                     }
-                    if(creep.store[RESOURCE_ENERGY] === creep.store.getCapacity(RESOURCE_ENERGY))
-                    {
-                        creep.memory.building = true;
-                    }
                 }
                 else
                 {
                     for (let siteName in construction_sites)
                     {
-                        if(!(construction_sites[siteName].structureType === "road"))
+                        if(!(construction_sites[siteName].structureType === STRUCTURE_ROAD))
                         {
                             creep.memory.building = true;
                             if(creep.build(construction_sites[siteName]) === ERR_NOT_IN_RANGE)
@@ -89,7 +85,8 @@ module.exports = {
                     {
                         to_repair = Game.getObjectById(creep.memory.repair_id);
 
-                        if(creep.repair(to_repair) === ERR_NOT_IN_RANGE)
+                        if(!(to_repair.structureType === STRUCTURE_WALL) &&
+                           creep.repair(to_repair) === ERR_NOT_IN_RANGE)
                         {
                             creep.moveTo(to_repair);
                         }

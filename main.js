@@ -46,6 +46,11 @@ module.exports.loop = function()
             delete Memory.creeps[name];
         }
     }
+    
+    if(Game.cpu.bucket > 9000)
+    {
+        Game.cpu.generatePixel();
+    }
 
 
 }

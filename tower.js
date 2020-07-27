@@ -106,6 +106,7 @@ module.exports =
         // ACTUAL TOWER CODE
 
         let hostiles = spawn.room.find(FIND_HOSTILE_CREEPS);
+        // attack
         if(hostiles.length > 0)
         {
             let username = hostiles[0].owner.username;
@@ -114,6 +115,7 @@ module.exports =
                 FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
             towers.forEach(tower => tower.attack(hostiles[0]));
         }
+        // repair
         else if(hostiles.length <= 0)
         {
             let towers = spawn.room.find(
@@ -122,7 +124,9 @@ module.exports =
                 tower => tower.repair(
                     tower.pos.findClosestByRange(FIND_STRUCTURES,
                         {
-                        filter: (structure) => structure.hits < structure.hitsMax
+                        filter: (structure) =>
+                            (structure.hits < structure.hitsMax && structure.structureType !== STRUCTURE_WALL) ||
+                            (structure.structureType === STRUCTURE_WALL && structure.hits < 100000)
                     })
                 )
             );

@@ -2,7 +2,7 @@ module.exports =
 {
     run(spawn)
     {
-        let total_creep_count = 8;
+        let total_creep_count = 6;
 
         let sources = spawn.room.find(FIND_SOURCES);
         if(sources.length === 1){total_creep_count = 3}
@@ -127,12 +127,12 @@ module.exports =
                        creep.moveTo(sources[creep.memory.source]);
                     }
                 }
-                /*
+
                 else if(creep.harvest(sources[creep.memory.source]) === ERR_NOT_IN_RANGE)
                 {
                    creep.moveTo(sources[creep.memory.source]);
                 }
-                */
+
                 if(creep.carry[RESOURCE_ENERGY] === creep.carryCapacity)
                 {
                     creep.memory.mining = false;
