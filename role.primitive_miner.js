@@ -2,7 +2,7 @@ module.exports =
 {
     run(spawn)
     {
-        let total_creep_count = 6;
+        let total_creep_count = 8;
 
         let sources = spawn.room.find(FIND_SOURCES);
         if(sources.length === 1){total_creep_count = 3}

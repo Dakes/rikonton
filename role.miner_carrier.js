@@ -142,11 +142,13 @@ module.exports =
 
 
         let current_creeps = 0;
+        let miner_creeps = 0;
         for (let name in Game.creeps)
         {
             if (name.includes('Miner_carrier')) { current_creeps++;}
+            if (name.includes('Miner-')) { miner_creeps++;}
         }
-        if(Object.keys(Game.creeps).toString().includes("Miner-") && current_creeps < total_creep_count)
+        if(miner_creeps > 0 && current_creeps < total_creep_count)
         {
             let parts = [MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY,
                 CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY];

@@ -86,7 +86,7 @@ module.exports =
             let work_parts = (source_energy / regeneration) / 2;
             spawn.room.memory.miner_parts = [];
             spawn.room.memory.miner_parts.push(MOVE);
-            for(let i=0; i < work_parts; i++)
+            for(let i=0; i < work_parts+1; i++)
             {
                 spawn.room.memory.miner_parts.push(WORK);
             }
@@ -97,14 +97,11 @@ module.exports =
         let miner_creeps = 0;
         for (let name in Game.creeps)
         {
-            // if source name in creep name, ++ next
             if (name.includes('Miner-')) { miner_creeps++;}
         }
 
-
-        if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length > 3)
+        if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length >= 3)
         {
-
             let parts = Array.from(spawn.room.memory.miner_parts);
             let part_length = Object.keys(spawn.room.memory.miner_parts).length - 1;
 

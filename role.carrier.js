@@ -152,12 +152,17 @@ module.exports =
 
         // Spawning new carrier creep
         let current_creeps = 0;
+        let miner_creeps = 0;
+        let miner_carrier_creeps = 0;
         for (let name in Game.creeps)
         {
             if (name.includes('Carrier-')) { current_creeps++;}
+            if (name.includes('Miner-')) { miner_creeps++;}
+            if (name.includes('Miner_carrier-')) { miner_carrier_creeps++;}
         }
 
-        if(current_creeps < total_creep_count && Object.keys(Game.creeps).length > 6)
+        if(current_creeps < total_creep_count && (Object.keys(Game.creeps).length > 6 ||
+                                                 (miner_creeps >= 2 && miner_carrier_creeps >= 2)))
         {
             let parts = [MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY,
                 CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY];

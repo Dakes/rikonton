@@ -50,9 +50,13 @@ module.exports =
 
         // Spawning new Upgrader creep
         let current_creeps = 0;
+        let miner_creeps = 0;
+        let miner_carrier_creeps = 0;
         for (let name in Game.creeps)
         {
             if (name.includes('Upgrader-')) { current_creeps++;}
+            if (name.includes('Miner-')) { miner_creeps++;}
+            if (name.includes('Miner_carrier-')) { miner_carrier_creeps++;}
         }
 
         // increase total creep count if there is enough energy in storage
@@ -60,7 +64,8 @@ module.exports =
         if(spawn.room.storage && spawn.room.storage.store[RESOURCE_ENERGY] > 500000){total_creep_count = 3;}
 
         // only spawn upgrader, if there are at least 5 other creeps
-        if(current_creeps < total_creep_count && Object.keys(Game.creeps).length > 7)
+        if(current_creeps < total_creep_count && ( Object.keys(Game.creeps).length > 7 ||
+                                                 (miner_creeps >= 2 && miner_carrier_creeps >= 2) ))
         {
             let parts = [MOVE, CARRY, CARRY, CARRY, WORK, CARRY, WORK, MOVE, CARRY, WORK, CARRY, WORK, MOVE,
                 CARRY, WORK, CARRY, WORK, MOVE, CARRY, WORK, CARRY, WORK, MOVE, CARRY, WORK];

@@ -42,7 +42,7 @@ module.exports = {
                     {
                        creep.moveTo(spawn.room.storage);
                     }
-                    else if(creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    else if(spawn.store[RESOURCE_ENERGY] === 300 && creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
                        creep.moveTo(spawn);
                     }
