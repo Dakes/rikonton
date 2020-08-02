@@ -16,6 +16,7 @@ module.exports.loop = function()
 
     let roads = require("road");
     let towers = require("tower");
+    let extensions = require("extension");
     let structures = require("structures");
 
 
@@ -36,6 +37,7 @@ module.exports.loop = function()
         roads.run(spawn);
         towers.run(spawn);
         structures.run(spawn);
+        extensions.run(spawn);
 
     }
 
@@ -46,11 +48,21 @@ module.exports.loop = function()
             delete Memory.creeps[name];
         }
     }
-    
+
+    /*
     if(Game.cpu.bucket > 9000)
     {
         Game.cpu.generatePixel();
+    }*/
+
+    try
+    {
+        if(Game.cpu.bucket > 9000)
+        {
+            Game.cpu.generatePixel();
+        }
     }
+    catch(err){}
 
 
 }
