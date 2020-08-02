@@ -75,7 +75,7 @@ module.exports =
                 let dropped_energy = false;
                 for (let i in dropped)
                 {
-                    if (dropped[i].resourceType === "energy")
+                    if (dropped[i].resourceType === RESOURCE_ENERGY)
                     {
                         if(!dropped_energy || dropped[i].amount > dropped_energy.amount)
                         {

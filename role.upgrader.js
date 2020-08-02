@@ -63,6 +63,24 @@ module.exports =
         if(spawn.room.storage && spawn.room.storage.store[RESOURCE_ENERGY] > 250000){total_creep_count = 2;}
         if(spawn.room.storage && spawn.room.storage.store[RESOURCE_ENERGY] > 500000){total_creep_count = 3;}
 
+        // get largest dropped energy stack. If more dropped energy, create more upgrader
+        let dropped = spawn.room.find(FIND_DROPPED_RESOURCES);
+        let dropped_energy = false;
+        for (let i in dropped)
+        {
+            if (dropped[i].resourceType === RESOURCE_ENERGY)
+            {
+                if(!dropped_energy || dropped[i].amount > dropped_energy.amount)
+                {
+                    dropped_energy = dropped[i];
+                }
+            }
+        }
+        if (dropped_energy.amount > 2000){total_creep_count += 1;}
+        if (dropped_energy.amount > 3000){total_creep_count += 1;}
+        if (dropped_energy.amount > 4000){total_creep_count += 1;}
+        if (dropped_energy.amount > 5000){total_creep_count += 1;}
+
         // only spawn upgrader, if there are at least 5 other creeps
         if(current_creeps < total_creep_count && ( Object.keys(Game.creeps).length > 7 ||
                                                  (miner_creeps >= 2 && miner_carrier_creeps >= 2) ))

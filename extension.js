@@ -3,6 +3,9 @@ module.exports =
 {
     run(spawn)
     {
+        // only execute every 100 ticks
+        if (Game.time % 100 != 0){return;}
+
         let level_extensions = {
           1: 0,
           2: 5,
@@ -27,9 +30,8 @@ module.exports =
         if (level_extensions[rc_level] > extensions.length)
         {
             let cluster_count = level_extensions[rc_level]/5;
-            let level_count = Math.ceil((cluster_count-1) /2 ) - 1;
-            if (cluster_count = 1){level_count = 0;}
-
+            let level_count = Math.ceil((cluster_count-1) /2 ) ;
+            //if (cluster_count = 1){level_count = 0;}
             build_diamond_shape(level_count, begin_coord);
 
         }

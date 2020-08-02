@@ -63,7 +63,6 @@ module.exports = {
                                 creep.memory.building = false;
                             }
                             return;
-                            break;
                         }
 
                     }
