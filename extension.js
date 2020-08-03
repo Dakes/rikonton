@@ -158,6 +158,7 @@ module.exports =
             start_pos.x = start_pos.x - 1;
             start_pos.createConstructionSite(STRUCTURE_EXTENSION);
         }
+
     }
 
 

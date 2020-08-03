@@ -11,6 +11,7 @@ module.exports.loop = function()
     let constructors = require("role.constructor");
     let carriers = require("role.carrier");
     let miner_carriers = require("role.miner_carrier");
+    let extension_carriers = require("role.extension_carrier");
     let primitive_miners = require("role.primitive_miner");
     let upgrader = require("role.upgrader");
 
@@ -30,6 +31,7 @@ module.exports.loop = function()
         primitive_miners.run(spawn);
         miners.run(spawn);
         miner_carriers.run(spawn);
+        extension_carriers.run(spawn);
         constructors.run(spawn);
         carriers.run(spawn);
         upgrader.run(spawn);

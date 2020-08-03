@@ -27,7 +27,7 @@ module.exports =
 
                 if(typeof creep.memory.delivering === "undefined"){creep.memory.delivering = false;}
 
-                if(creep.memory.delivering === false && creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10))
+                if(!creep.memory.delivering && creep.store.getUsedCapacity(RESOURCE_ENERGY) < (creep.store.getCapacity() - 10))
                 {
                     if(Object.keys(Game.creeps).length < 3){return;}
 
@@ -70,7 +70,7 @@ module.exports =
                     }
                     if(creep.energy < creep.energyCapacity - 10)
                     {
-                        creep.memory.delivering = true;
+                        creep.memory.delivering = false;
                     }
                 }
                 else
@@ -95,7 +95,7 @@ module.exports =
                             {
                                 creep.memory.delivering = false;
                             }
-                            return;
+                            break;
                         }
 
                         // DELIVERING TO EXTENSION
@@ -115,7 +115,7 @@ module.exports =
                             {
                                 creep.memory.delivering = false;
                             }
-                            return;
+                            break;
                         }
 
                         //DELIVERING TO SPAWN
@@ -131,7 +131,7 @@ module.exports =
                             {
                                 creep.memory.delivering = false;
                             }
-                            return;
+                            break;
                         }
 
 
