@@ -265,7 +265,7 @@ module.exports = {
 
                 for (let siteName in constSites)
                 {
-                    if(constSites[siteName].structureType === "road")
+                    if(constSites[siteName].structureType === STRUCTURE_ROAD)
                     {
                         creep.memory.building = true;
                         if(creep.build(constSites[siteName]) === ERR_NOT_IN_RANGE)

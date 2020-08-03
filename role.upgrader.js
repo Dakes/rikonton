@@ -14,13 +14,13 @@ module.exports =
                 if(creep.store[RESOURCE_ENERGY] === 0)
                 {
                     if(Object.keys(Game.creeps).length < 3){return;}
-                    if(creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE &&
-                        spawn.room.storage.store[RESOURCE_ENERGY] > 1000)
+                    if(spawn.room.storage.store[RESOURCE_ENERGY] > 10000 &&
+                        creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
                         creep.moveTo(spawn.room.storage);
                     }
 
-                    else if((spawn.store[RESOURCE_ENERGY] > 290) &&
+                    else if((!spawn.room.storage && spawn.store[RESOURCE_ENERGY] > 290) &&
                         creep.store[RESOURCE_ENERGY] === 0)
                     {
                         if(creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)

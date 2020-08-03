@@ -124,6 +124,7 @@ module.exports =
             for (let i in street_positions)
             {
                 let street_pos = street_positions[i];
+                // TODO: check if in wall
                 street_pos.createConstructionSite(STRUCTURE_ROAD);
             }
         }
