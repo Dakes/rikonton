@@ -44,17 +44,25 @@ module.exports =
          */
         function build_diamond_shape(level, start_pos)
         {
+            let cluster_built;
+            let cur_max_cluster = level_extensions[rc_level]/5
+            if (level > 0)
+            {
+                cluster_built = build_diamond_shape(level - 1, start_pos);
+            }
+            else
+            {
+                cluster_built = 0;
+            }
+            // console.log("level: ", level);
+            // console.log("cluster built: ", cluster_built);
+
             // cluster count is level *2 + 1 if level starts at 0.
             cluster_count = level * 2 + 1;
-
-            total_cluster_count = 0;
-            for (let i=0; i<level+1; i++){total_cluster_count += i * 2 + 1}
-            // console.log(total_cluster_count);
 
             let cur_extensions = spawn.room.find(FIND_MY_STRUCTURES, {
                             filter: function(object){return object.structureType === STRUCTURE_EXTENSION}
                     });
-            cluster_built = cur_extensions.length/5;
 
             let cur_pos = new RoomPosition(start_pos.x, start_pos.y, start_pos.roomName);
             cur_pos.x = cur_pos.x - level*2;
@@ -62,12 +70,12 @@ module.exports =
 
             for (let i=0; i<cluster_count; i++)
             {
-                if (cluster_built > total_cluster_count)
+                if (cluster_built >= cur_max_cluster)
                 {
                     break;
                 }
                 if (i === 0){}
-                else if ( i <= Math.round(cluster_count/2) )
+                else if ( i < Math.round(cluster_count/2) )
                 {
                     cur_pos.x = cur_pos.x - 2;
                     cur_pos.y = cur_pos.y + 2;
@@ -82,13 +90,11 @@ module.exports =
                 let cur_pos_cpy = new RoomPosition(cur_pos.x, cur_pos.y, cur_pos.roomName);
                 build_street_square(cur_pos_cpy);
                 build_extensions(cur_pos_cpy);
-                cluster_built += 5;
+                cluster_built += 1;
             }
 
-            if (level > 0)
-            {
-                build_diamond_shape(level - 1, start_pos);
-            }
+            return cluster_built;
+
         }
 
         /**
