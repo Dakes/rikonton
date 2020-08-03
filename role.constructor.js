@@ -17,47 +17,52 @@ module.exports = {
             if (!name.includes("Constructor")) {continue;}
             let creep = Game.creeps[name];
 
+            try{creep.memory.building.valueOf();}
+            catch(e){creep.memory.building = false;}
+
+            try{creep.memory.repair_id.valueOf();}
+            catch(e){creep.memory.repair_id = false;}
+
 
             // Creep Code ------------------------------------------------------
             try
             {
-                let constSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+                let construction_sites = spawn.room.find(FIND_CONSTRUCTION_SITES);
 
                 // before building, check if creep has energy
 
 
-                if(creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.building === false)
+                if( (creep.store[RESOURCE_ENERGY] < (creep.store.getCapacity(RESOURCE_ENERGY) - 10) && creep.memory.building === false &&
+                   !creep.memory.repair_id) || creep.store[RESOURCE_ENERGY] === 0)
                 {
                     if(Object.keys(Game.creeps).length < 5){return;}
-                    if(spawn.transferEnergy(creep) === ERR_NOT_IN_RANGE)
-                    {
-                        creep.moveTo(spawn);
-                    }
-                    else
-                    {
-                        if(creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10))
-                        {
 
-                        }
+
+                    if(spawn.room.storage && creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    {
+                       creep.moveTo(spawn.room.storage);
+                    }
+                    else if(spawn.store[RESOURCE_ENERGY] === 300 && creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    {
+                       creep.moveTo(spawn);
                     }
                 }
                 else
                 {
-                    for (let siteName in constSites)
+                    for (let siteName in construction_sites)
                     {
-                        if(!(constSites[siteName].structureType === "road"))
+                        if(!(construction_sites[siteName].structureType === STRUCTURE_ROAD))
                         {
                             creep.memory.building = true;
-                            if(creep.build(constSites[siteName]) === ERR_NOT_IN_RANGE)
+                            if(creep.build(construction_sites[siteName]) === ERR_NOT_IN_RANGE)
                             {
-                                creep.moveTo(constSites[siteName]);
+                                creep.moveTo(construction_sites[siteName]);
                             }
-                            if(creep.carry[RESOURCE_ENERGY] === 0)
+                            if(creep.store[RESOURCE_ENERGY] === 0)
                             {
                                 creep.memory.building = false;
                             }
                             return;
-                            break;
                         }
 
                     }
@@ -66,15 +71,31 @@ module.exports = {
 
                     let to_repair = creep.pos.findClosestByRange(
                         FIND_STRUCTURES, {
-                            filter: function(object){return !(object.structureType === STRUCTURE_ROAD) && (object.hits < object.hitsMax / 2);
+                            filter: function(object){return object.structureType !== STRUCTURE_ROAD && (object.hits < object.hitsMax / 2);
                         }
                     });
 
-                    if(to_repair)
+                    if(to_repair && creep.memory.repair_id === false)
                     {
-                        if(creep.repair(to_repair) === ERR_NOT_IN_RANGE)
+                        creep.memory.repair_id = to_repair.id;
+                    }
+
+                    if(creep.memory.repair_id)
+                    {
+                        to_repair = Game.getObjectById(creep.memory.repair_id);
+
+                        if(!(to_repair.structureType === STRUCTURE_WALL) &&
+                           creep.repair(to_repair) === ERR_NOT_IN_RANGE)
                         {
                             creep.moveTo(to_repair);
+                        }
+                        if(creep.store[RESOURCE_ENERGY] === 0)
+                        {
+                            creep.memory.building = false;
+                        }
+                        if(to_repair.hits > to_repair.hitsMax - 200)
+                        {
+                            creep.memory.repair_id = false;
                         }
                     }
                     // nothing to repair, move to idle position
@@ -106,22 +127,21 @@ module.exports = {
             if (name.includes('Constructor')) { builder_creeps++;}
         }
 
-        // only spawn road constructor, if there are at least 5 other creeps and no road constructor
+        // only spawn constructor, if there are at least 7 other creeps
         if(builder_creeps < total_creep_count && Object.keys(Game.creeps).length > 7)
         {
-            spawn.spawnCreep([CARRY, CARRY, CARRY, WORK, MOVE],
-            spawn.name + '-' + 'Constructor' + '-' + Game.time);
-        }
+            let parts = [CARRY, CARRY, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, CARRY, WORK, CARRY, CARRY, WORK, MOVE,
+                CARRY, CARRY, WORK, CARRY, CARRY, WORK, MOVE, CARRY, CARRY, MOVE, CARRY, WORK, MOVE, CARRY, WORK, MOVE];
+            let part_length = Object.keys(parts).length - 1;
 
-        for (let name in Memory.creeps)
-        {
-            if(!Game.creeps[name])
+            for (let i = 0; i < part_length; i++)
             {
-                delete Memory.creeps[name];
+                let success = spawn.spawnCreep(parts, spawn.name + '-' + 'Constructor' + '-' + Game.time);
+                if(success === OK){console.log("Spawning Constructor: ", parts);return;}
+                if(success === ERR_NOT_ENOUGH_ENERGY){parts.pop();}
+                if(success === ERR_BUSY){return;}
+                if(parts.length < 5){return;}
             }
         }
-
-
-
     }
 };

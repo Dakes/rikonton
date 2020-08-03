@@ -12,6 +12,7 @@ module.exports =
     run(spawn)
     {
         let total_creep_count = 1;
+        if(Object.keys(Game.creeps).length > 12){total_creep_count = 2}
 
         // TODO: only build if total creep count > 5
 
@@ -26,20 +27,50 @@ module.exports =
 
                 if(typeof creep.memory.delivering === "undefined"){creep.memory.delivering = false;}
 
-                if(creep.memory.delivering === false && creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10))
+                if(!creep.memory.delivering && creep.store.getUsedCapacity(RESOURCE_ENERGY) < (creep.store.getCapacity() - 10))
                 {
                     if(Object.keys(Game.creeps).length < 3){return;}
-                    if(creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+
+                    // pickup from ruins
+                    let ruins = spawn.room.find(FIND_RUINS);
+                    let ruin = false;
+                    for (let i in ruins)
+                    {
+                        if (ruins[i] && ruins[i].store.getUsedCapacity([RESOURCE_ENERGY]) > 0)
+                        {
+                            ruin = ruins[i];
+                            break;
+                        }
+                    }
+                    if(ruin)
+                    {
+                        if(creep.withdraw(ruin, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                        {
+                            creep.moveTo(ruin);
+                        }
+                    }
+
+                    // withdraw from storage
+                    else if(spawn.room.storage && creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
                         creep.moveTo(spawn.room.storage);
                     }
+                    // withdraw from spawn
+                    else if(spawn.store[RESOURCE_ENERGY] > 290)
+                    {
+                        if(creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                        {
+                            creep.moveTo(spawn);
+                        }
+                    }
+
                     if(creep.energy > creep.energyCapacity - 10)
                     {
                         creep.memory.delivering = true;
                     }
                     if(creep.energy < creep.energyCapacity - 10)
                     {
-                        creep.memory.delivering = true;
+                        creep.memory.delivering = false;
                     }
                 }
                 else
@@ -47,11 +78,12 @@ module.exports =
                     let structures = spawn.room.find(FIND_MY_STRUCTURES);
                     for (let struct in structures)
                     {
+                        // TODO: use foreach as with towers
                         // DELIVERING TO TOWER
                         if(structures[struct].structureType === "tower")
                         {
                             let tower = structures[struct];
-                            if(tower.energy === tower.energyCapacity){continue;}
+                            if(tower.energy >= tower.energyCapacity/2){continue;}
                             creep.memory.delivering = true;
                             // let test = creep.transfer(towers[tower], RESOURCE_ENERGY);
                             // console.log(test);
@@ -59,32 +91,35 @@ module.exports =
                             {
                                 creep.moveTo(tower);
                             }
-                            if(creep.carry[RESOURCE_ENERGY] === 0)
+                            if(creep.store.getUsedCapacity(RESOURCE_ENERGY) <= 25)
                             {
                                 creep.memory.delivering = false;
                             }
-                            return;
+                            break;
                         }
 
                         // DELIVERING TO EXTENSION
-                        if(structures[struct].structureType === STRUCTURE_EXTENSION)
+                        else if(structures[struct].structureType === STRUCTURE_EXTENSION)
                         {
                             let extension = structures[struct];
-                            if(extension.energy === extension.energyCapacity){continue;}
+                            if(extension.store.getUsedCapacity(RESOURCE_ENERGY) >= extension.store.getCapacity(RESOURCE_ENERGY)){continue;}
                             creep.memory.delivering = true;
+
                             if(creep.transfer(extension, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                             {
                                 creep.moveTo(extension);
                             }
+                            // extension not excessable, f.e. room controller downgrade
+                            else if(creep.transfer(extension, RESOURCE_ENERGY) === ERR_FULL){}
                             if(creep.carry[RESOURCE_ENERGY] === 0)
                             {
                                 creep.memory.delivering = false;
                             }
-                            return;
+                            break;
                         }
 
                         //DELIVERING TO SPAWN
-                        if(spawn.energy < spawn.energyCapacity)
+                        else if(spawn.energy < spawn.energyCapacity)
                         {
                             creep.memory.delivering = true;
                             if(creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
@@ -96,7 +131,7 @@ module.exports =
                             {
                                 creep.memory.delivering = false;
                             }
-                            return;
+                            break;
                         }
 
 
@@ -117,16 +152,30 @@ module.exports =
 
         // Spawning new carrier creep
         let current_creeps = 0;
+        let miner_creeps = 0;
+        let miner_carrier_creeps = 0;
         for (let name in Game.creeps)
         {
             if (name.includes('Carrier-')) { current_creeps++;}
+            if (name.includes('Miner-')) { miner_creeps++;}
+            if (name.includes('Miner_carrier-')) { miner_carrier_creeps++;}
         }
 
-        // only spawn road constructor, if there are at least 5 other creeps and no road constructor
-        if(current_creeps < total_creep_count && Object.keys(Game.creeps).length > 6)
+        if(current_creeps < total_creep_count && (Object.keys(Game.creeps).length > 6 ||
+                                                 (miner_creeps >= 2 && miner_carrier_creeps >= 2)))
         {
-            let name = spawn.name + '-' + 'Carrier' + '-' + Game.time;
-            spawn.spawnCreep([CARRY, CARRY, CARRY, CARRY, MOVE], name);
+            let parts = [MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY,
+                CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY];
+            let part_length = Object.keys(parts).length - 1;
+
+            for (let i = 0; i < part_length; i++)
+            {
+                let success = spawn.spawnCreep(parts, spawn.name + '-' + 'Carrier' + '-' + Game.time);
+                if(success === OK){console.log("Spawning Carrier: ", parts);return;}
+                if(success === ERR_NOT_ENOUGH_ENERGY){parts.pop();}
+                if(success === ERR_BUSY){return;}
+                if(parts.length < 6){return;}
+            }
         }
 
 

@@ -10,14 +10,22 @@
 module.exports = {
     run(spawn)
     {
-        /*
-        Memory.road_array = [];
-        Memory.source_set = false;
-        Memory.room_controller_set = false;
 
-        */
+        // Memory.road_array = [];
+        // Memory.source_set = false;
+        // Memory.room_controller_set = false;
 
-        //Memory.road_build_counter = 99999;Memory.road_calculate_counter = 99999;spawn.room.memory.tower_set = false;
+        // Memory.road_build_counter = 99999
+        /*// delete road construction sites
+        Memory.road_calculate_counter = 99999999
+        let construction_sites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+        for (let site of construction_sites)
+        {
+            if (site.structureType === STRUCTURE_ROAD){ site.remove(); }
+        }*/
+
+
+        // Memory.road_build_counter = 99999;Memory.road_calculate_counter = 99999;spawn.room.memory.tower_set = false;
 
         let total_creep_count = 1;
 
@@ -59,6 +67,13 @@ module.exports = {
                     Memory.source_set = false;
                     Memory.room_controller_set = false;
                     Memory.road_calculate_counter = 0;
+
+                    // delete old construction sites
+                    let construction_sites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+                    for (let site of construction_sites)
+                    {
+                        if (site.structureType === STRUCTURE_ROAD){ site.remove(); }
+                    }
                 }
 
                 // source streets
@@ -113,9 +128,6 @@ module.exports = {
                                 }
                             }
 
-
-
-
                             // let path = tower.pos.findPathTo(FIND_MY_STRUCTURES, {filter: function(object) {return object.structureType === "road"}});
                             // let path = tower.pos.findPathTo(spawn.pos);  // working
                             // console.log(path);
@@ -142,7 +154,16 @@ module.exports = {
                             //console.log("creating construction site");
                             spawn.room.createConstructionSite
                             (Memory.road_array[i][2][j].x,Memory.road_array[i][2][j].y, STRUCTURE_ROAD);
-                            Memory.road_build_counter = 0;
+                        }
+                    }
+                    Memory.road_build_counter = 0;
+                    // delete accidentally built tunnels
+                    let construction_sites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+                    for (let site of construction_sites)
+                    {
+                        if (site.structureType === STRUCTURE_ROAD && site.progressTotal > 1501)
+                        {
+                            site.remove();
                         }
                     }
                 }
@@ -160,18 +181,38 @@ module.exports = {
 
 
 
-            // Creep Code ------------------------------------------------------
+            // Creep Code ----------------------------------------------------------------------------------------------
 
             // before building, check if creep has energy
 
-            if(typeof creep.memory.building === "undefined"){creep.memory.building = false;}
-            if(typeof creep.memory.road_repair_prev === "undefined"){creep.memory.road_repair_prev = false;}
+            try{creep.memory.building.valueOf()}
+            catch(e){creep.memory.building = false;}
+            try{creep.memory.road_repair_prev.valueOf()}
+            catch(e){creep.memory.road_repair_prev = false;}
 
-            if(creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.building === false)
+            // check if creep is empty and creep.memory.building is true (bug) and set to false
+            if (creep.memory.building === true && creep.carry[RESOURCE_ENERGY] === 0)
+            {
+                creep.memory.building = false;
+            }
+
+            // get energy from storage
+            if(spawn.room.storage && creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) &&
+                creep.memory.building === false)
             {
                 if(creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                 {
                     creep.moveTo(spawn.room.storage);
+                }
+            }
+            // get energy from spawn
+            else if((spawn.store[RESOURCE_ENERGY] > 290) &&
+                creep.carry[RESOURCE_ENERGY] < (creep.carryCapacity - 10) && creep.memory.building === false)
+            {
+
+                if(creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                {
+                    creep.moveTo(spawn);
                 }
             }
             else
@@ -224,7 +265,7 @@ module.exports = {
 
                 for (let siteName in constSites)
                 {
-                    if(constSites[siteName].structureType === "road")
+                    if(constSites[siteName].structureType === STRUCTURE_ROAD)
                     {
                         creep.memory.building = true;
                         if(creep.build(constSites[siteName]) === ERR_NOT_IN_RANGE)
@@ -266,10 +307,20 @@ module.exports = {
         // only spawn road constructor, if there are at least 5 other creeps and no road constructor
         if(builder_creeps < total_creep_count && Object.keys(Game.creeps).length > 5)
         {
-            spawn.spawnCreep([CARRY, CARRY, CARRY, WORK, MOVE],
-            spawn.name + '-' + 'Road_constructor' + '-' + Game.time);
-        }
+            let parts = [CARRY, CARRY, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK,
+                CARRY, WORK, MOVE, CARRY, WORK, CARRY, WORK, MOVE, CARRY, WORK, CARRY, WORK, MOVE];
+            let part_length = Object.keys(parts).length - 1;
 
+            for (let i = 0; i < part_length; i++)
+            {
+                let success = spawn.spawnCreep(parts, spawn.name + '-' + 'Road_constructor' + '-' + Game.time);
+                if(success === OK){console.log("Spawning Road_constructor: ", parts);return;}
+                if(success === ERR_NOT_ENOUGH_ENERGY){parts.pop();}
+                if(success === ERR_BUSY){return;}
+                if(parts.length < 5){return;}
+            }
+
+        }
 
     }
 

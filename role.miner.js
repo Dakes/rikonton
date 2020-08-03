@@ -12,59 +12,55 @@ module.exports =
                 continue;
             }
             let creep = Game.creeps[name];
-            if (typeof creep.memory.source === "undefined")
+
+            try{creep.memory.source_id.valueOf();}
+            catch(e)
             {
-                creep.memory.source = false;
-            }
-            if (typeof spawn.room.memory.occupied_sources === "undefined")
-            {
-                spawn.room.memory.occupied_sources = [];
+                creep.memory.source_id = false;
             }
 
-            // delete miner and free memory, if health is too low
-            if (creep.ticksToLive < 20)
+            // set source in memory
+            if(creep.memory.source_id === false)
             {
-                for (let i in spawn.room.memory.occupied_sources)
+                for (let i in sources)
                 {
-                    if (spawn.room.memory.occupied_sources[i] === creep.memory.source)
+                    let source = sources[i];
+                    // iterate through miners, next if miner has source id
+                    let occupied = false;
+                    for (let name2 in Game.creeps)
                     {
-                        spawn.room.memory.occupied_sources.splice(i, 1);
+                        if (!name2.includes("Miner-")){continue;}
+                        if(Game.creeps[name2].memory.source_id === source.id){occupied = true;}
                     }
+                    if(occupied === false)
+                    {
+                        creep.memory.source_id = source.id;
+                        break;
+                    }
+                    // if (creep.memory.source_id !== false){break;}
                 }
-                creep.memory.source = false;
-                creep.suicide();
             }
 
-
-            // set sources in memory
-            for (let i in sources)
+            if (creep.memory.source_id !== false)
             {
-                let source = sources[i];
-
-                // TODO: check this
-                // if source is in memory, it is occupied by miner
-                if (source in spawn.room.memory.occupied_sources)
+                let source = Game.getObjectById(creep.memory.source_id);
+                for(let i in spawn.room.memory.container_pos)
                 {
-                    continue;
-                }
+                    let container = spawn.room.memory.container_pos[i];
+                    let container_pos = new RoomPosition(container[0].x, container[0].y , container[0].roomName);
+                    if(container[1] === creep.memory.source_id)
+                    {
+                        // TODO: kill creep, blocking container
+                        if (creep.pos.x === container_pos.x && creep.pos.y === container_pos.y)
+                        {
+                            creep.harvest(source);
+                        }
+                        else
+                        {
+                            creep.moveTo(container_pos);
+                        }
+                    }
 
-                if (creep.memory.source === false)
-                {
-                    creep.memory.source = source;
-                    spawn.room.memory.occupied_sources.push(source);
-                }
-
-            }
-
-            if (creep.memory.source !== false)
-            {
-                // TODO: use ids instead, you idiot
-                let x = creep.memory.source.pos.x;
-                let y = creep.memory.source.pos.y;
-                let source = spawn.room.lookForAt(LOOK_SOURCES, x, y)[0];
-                if (creep.harvest(source) === ERR_NOT_IN_RANGE)
-                {
-                    creep.moveTo(source);
                 }
             }
 
@@ -80,7 +76,7 @@ module.exports =
             spawn.room.memory.miner_parts = false;
         }
 
-        if (spawn.room.memory.miner_parts === false || Object.keys(spawn.room.memory.miner_parts).length < 3)
+        if (spawn.room.memory.miner_parts === false || Object.keys(spawn.room.memory.miner_parts).length < 4)
         {
             console.log("recalculating miner_parts");
             let source = sources[0];
@@ -90,12 +86,13 @@ module.exports =
             let work_parts = (source_energy / regeneration) / 2;
             spawn.room.memory.miner_parts = [];
             spawn.room.memory.miner_parts.push(MOVE);
-            for(let i=0; i < work_parts; i++)
+            for(let i=0; i < work_parts+1; i++)
             {
                 spawn.room.memory.miner_parts.push(WORK);
             }
         }
 
+        // for i in sources
 
         let miner_creeps = 0;
         for (let name in Game.creeps)
@@ -103,19 +100,19 @@ module.exports =
             if (name.includes('Miner-')) { miner_creeps++;}
         }
 
-        // TODO: generate dynamically with howmuch energy is available
-        if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length > 3)
+        if(miner_creeps < total_creep_count && Object.keys(Game.creeps).length >= 3)
         {
-            let miner_parts = spawn.room.memory.miner_parts;
+            let parts = Array.from(spawn.room.memory.miner_parts);
             let part_length = Object.keys(spawn.room.memory.miner_parts).length - 1;
-            
+
             for (let i = 0; i < part_length; i++)
             {
-                let success = spawn.spawnCreep(miner_parts,
+                let success = spawn.spawnCreep(parts,
                     spawn.name + '-' + 'Miner' + '-' + Game.time);
-                if(success === OK){console.log("Spawning Miner: ", spawn.room.memory.miner_parts);return;}
-                if(success === ERR_NOT_ENOUGH_ENERGY){miner_parts.pop();}
+                if(success === OK){console.log("Spawning Miner: ", parts);return;}
+                if(success === ERR_NOT_ENOUGH_ENERGY){parts.pop();}
                 if(success === ERR_BUSY){return;}
+                if(parts.length < 3){return;}
             }
         }
     }
