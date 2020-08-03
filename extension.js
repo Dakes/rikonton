@@ -4,7 +4,7 @@ module.exports =
     run(spawn)
     {
         // only execute every 100 ticks
-        if (Game.time % 100 != 0){return;}
+        if (Game.time % 100 !== 0){return;}
 
         let level_extensions = {
           1: 0,
@@ -130,8 +130,13 @@ module.exports =
             for (let i in street_positions)
             {
                 let street_pos = street_positions[i];
-                // TODO: check if in wall
-                street_pos.createConstructionSite(STRUCTURE_ROAD);
+
+                let found = street_pos.lookFor(LOOK_TERRAIN);
+                if(found.length && found[0].getTerrain() !== TERRAIN_MASK_WALL)
+                {
+                    street_pos.createConstructionSite(STRUCTURE_ROAD);
+                }
+
             }
         }
 
