@@ -4,7 +4,7 @@ module.exports =
     run(spawn)
     {
         // only execute every 100 ticks
-        // if (Game.time % 100 !== 0){return;}
+        if (Game.time % 100 !== 0){return;}
 
         let level_extensions = {
           1: 0,
