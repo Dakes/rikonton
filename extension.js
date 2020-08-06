@@ -31,12 +31,10 @@ module.exports =
         {
             let cluster_count = level_extensions[rc_level]/5;
             let level_count = Math.ceil((cluster_count-1) /2 ) ;
-            //if (cluster_count = 1){level_count = 0;}
             build_diamond_shape(level_count, begin_coord);
 
         }
 
-        // console.log(myFunction(5, 4));
         /**
          * builds (expands) the bigger diamond shape for current level, each level has 2 more clusters
          * @param level The nth "shell" of the shape
