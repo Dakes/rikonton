@@ -11,6 +11,18 @@ module.exports =
                 if (!name.includes("Upgrader-")) {continue;}
                 let creep = Game.creeps[name];
 
+                // sign room controller
+                if (spawn.room.controller.sign.username != "Dakes")
+                {
+                    if(creep.room.controller)
+                    {
+                        if(creep.signController(creep.room.controller, "Rikonton") === ERR_NOT_IN_RANGE)
+                        {
+                            creep.moveTo(creep.room.controller);
+                        }
+                    }
+                }
+
                 if(creep.store[RESOURCE_ENERGY] === 0)
                 {
                     if(Object.keys(Game.creeps).length < 3){return;}
