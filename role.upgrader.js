@@ -12,14 +12,13 @@ module.exports =
                 let creep = Game.creeps[name];
 
                 // sign room controller
-                if (spawn.room.controller.sign.username != "Dakes")
+                // TODO: generalize user and message
+                if (spawn.room.controller.sign && spawn.room.controller.sign.username != "Dakes")
                 {
-                    if(creep.room.controller)
+                    if(creep.room.controller &&
+                        creep.signController(creep.room.controller, "Rikonton bot by Dakes") === ERR_NOT_IN_RANGE)
                     {
-                        if(creep.signController(creep.room.controller, "Rikonton") === ERR_NOT_IN_RANGE)
-                        {
-                            creep.moveTo(creep.room.controller);
-                        }
+                        creep.moveTo(creep.room.controller);
                     }
                 }
 
