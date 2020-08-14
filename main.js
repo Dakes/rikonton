@@ -25,7 +25,8 @@ module.exports.loop = function()
     {
         let room = Game.rooms[i];
         // get the first spawn in room
-        let spawn = room.find(FIND_MY_SPAWNS)[0];
+        let spawns = room.find(FIND_MY_SPAWNS);
+        let spawn = spawns[Game.time%spawns.length];
 
         defenders.run(spawn);
         primitive_miners.run(spawn);
