@@ -20,6 +20,9 @@ module.exports = {
             try{creep.memory.building.valueOf();}
             catch(e){creep.memory.building = false;}
 
+            try{creep.memory.construction_id.valueOf();}
+            catch(e){creep.memory.construction_id = false;}
+
             try{creep.memory.repair_id.valueOf();}
             catch(e){creep.memory.repair_id = false;}
 
@@ -32,39 +35,51 @@ module.exports = {
                 // before building, check if creep has energy
 
 
-                if( (creep.store[RESOURCE_ENERGY] < (creep.store.getCapacity(RESOURCE_ENERGY) - 10) && creep.memory.building === false &&
-                   !creep.memory.repair_id) || creep.store[RESOURCE_ENERGY] === 0)
+                if( (creep.store[RESOURCE_ENERGY] < (creep.store.getCapacity(RESOURCE_ENERGY)/2) && creep.memory.building === false &&
+                   !creep.memory.repair_id && !creep.memory.construction_id) || creep.store[RESOURCE_ENERGY] === 0)
                 {
                     if(Object.keys(Game.creeps).length < 5){return;}
 
 
                     if(spawn.room.storage && creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
-                       creep.moveTo(spawn.room.storage);
+                        creep.moveTo(spawn.room.storage);
                     }
-                    else if(spawn.store[RESOURCE_ENERGY] === 300 && creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+                    else if(!spawn.room.storage && spawn.store[RESOURCE_ENERGY] === 300 && creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
-                       creep.moveTo(spawn);
+                        creep.moveTo(spawn);
                     }
                 }
                 else
                 {
                     for (let siteName in construction_sites)
                     {
-                        if(!(construction_sites[siteName].structureType === STRUCTURE_ROAD))
+                        if(!(construction_sites[siteName].structureType === STRUCTURE_ROAD) &&
+                            !creep.memory.construction_id)
                         {
                             creep.memory.building = true;
-                            if(creep.build(construction_sites[siteName]) === ERR_NOT_IN_RANGE)
-                            {
-                                creep.moveTo(construction_sites[siteName]);
-                            }
-                            if(creep.store[RESOURCE_ENERGY] === 0)
-                            {
-                                creep.memory.building = false;
-                            }
-                            return;
+                            creep.memory.construction_id = construction_sites[siteName].id;
+
+                            break;
                         }
 
+                    }
+                    if (creep.memory.construction_id && creep.memory.building === true)
+                    {
+                        let cur_const_site = Game.getObjectById(creep.memory.construction_id);
+                        if (!cur_const_site)
+                        {
+                            creep.memory.construction_id = false;
+                        }
+                        else if(creep.build(cur_const_site) === ERR_NOT_IN_RANGE)
+                        {
+                            creep.moveTo(cur_const_site);
+                        }
+                        if(creep.store[RESOURCE_ENERGY] === 0)
+                        {
+                            creep.memory.building = false;
+                        }
+                        return;
                     }
 
                     // repair
