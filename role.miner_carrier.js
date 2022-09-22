@@ -13,7 +13,7 @@ module.exports =
     run(spawn)
     {
         let sources = spawn.room.find(FIND_SOURCES);
-        let total_creep_count = Object.keys(sources).length * 1;
+        let total_creep_count = Object.keys(sources).length * 2;
 
         for(let name in Game.creeps)
         {

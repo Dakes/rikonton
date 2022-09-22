@@ -299,13 +299,15 @@ module.exports = {
 
         // Generate new road_constructor creep
         let builder_creeps = 0;
+        let carrier_creeps = 0;
         for (let name in Game.creeps)
         {
             if (name.includes('Road_constructor')) { builder_creeps++;}
+            if (name.includes('Carrier')) {carrier_creeps++;}
         }
 
         // only spawn road constructor, if there are at least 5 other creeps and no road constructor
-        if(builder_creeps < total_creep_count && Object.keys(Game.creeps).length > 5)
+        if(builder_creeps < total_creep_count && Object.keys(Game.creeps).length > 5 && carrier_creeps >= 2)
         {
             let parts = [CARRY, CARRY, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK,
                 CARRY, WORK, MOVE, CARRY, WORK, CARRY, WORK, MOVE, CARRY, WORK, CARRY, WORK, MOVE];

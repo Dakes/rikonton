@@ -44,6 +44,7 @@ module.exports =
             if (creep.memory.source_id !== false)
             {
                 let source = Game.getObjectById(creep.memory.source_id);
+                
                 for(let i in spawn.room.memory.container_pos)
                 {
                     let container = spawn.room.memory.container_pos[i];
@@ -57,7 +58,8 @@ module.exports =
                         }
                         else
                         {
-                            creep.moveTo(container_pos);
+                            let t = creep.moveTo(container_pos);
+                            
                         }
                     }
 

@@ -7,13 +7,14 @@ module.exports.loop = function()
     //}
 
     let defenders = require("role.defender");
-    let miners = require("role.miner");
+    
     let constructors = require("role.constructor");
-    let carriers = require("role.carrier");
     let miner_carriers = require("role.miner_carrier");
+    let carriers = require("role.carrier");
     let extension_carriers = require("role.extension_carrier");
     let primitive_miners = require("role.primitive_miner");
     let upgrader = require("role.upgrader");
+    let miners = require("role.miner");
 
     let roads = require("road");
     let towers = require("tower");
@@ -25,11 +26,13 @@ module.exports.loop = function()
     {
         let room = Game.rooms[i];
         // get the first spawn in room
-        let spawn = room.find(FIND_MY_SPAWNS)[0];
+        let spawns = room.find(FIND_MY_SPAWNS);
+        let spawn = spawns[Game.time%spawns.length];
 
+        miners.run(spawn);
         defenders.run(spawn);
         primitive_miners.run(spawn);
-        miners.run(spawn);
+        
         miner_carriers.run(spawn);
         extension_carriers.run(spawn);
         constructors.run(spawn);
@@ -57,6 +60,7 @@ module.exports.loop = function()
         Game.cpu.generatePixel();
     }*/
 
+    
     try
     {
         if(Game.cpu.bucket > 9000)

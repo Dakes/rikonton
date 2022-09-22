@@ -2,13 +2,16 @@ module.exports =
 {
     run(spawn)
     {
-        let total_creep_count = 8;
+        let total_creep_count = 10;
 
         let sources = spawn.room.find(FIND_SOURCES);
-        if(sources.length === 1){total_creep_count = 3}
+        if(sources.length === 1){total_creep_count = 5}
 
         let containers = spawn.room.find(FIND_STRUCTURES, {filter: (i) => {return( i.structureType == STRUCTURE_CONTAINER)}});
-        if (containers.length >= 2){total_creep_count -= 3}
+        if (containers.length >= 2){total_creep_count -= 4}
+        if (spawn.room.storage){total_creep_count -= 2}
+        
+        if(spawn.room.storage && (spawn.room.storage.store.getUsedCapacity() > 10000)){total_creep_count = 0}
 
         for(let name in Game.creeps)
         {
@@ -112,21 +115,11 @@ module.exports =
                     creep.moveTo(Game.getObjectById(creep.memory.dropped_energy.id));
                 }
 
-                if(creep.carry === creep.carryCapacity)
-                {
-                    creep.memory.mining = false;
-                }
                 if(creep.memory.dropped_energy && creep.memory.dropped_energy.amount < 20)
-                {
                     creep.memory.dropped_energy = false;
-                }
                 else if(sources.length >= 2 && dropped_energy.amount < creep.carryCapacity)
-                {
                     if(creep.harvest(sources[creep.memory.source]) === ERR_NOT_IN_RANGE)
-                    {
                        creep.moveTo(sources[creep.memory.source]);
-                    }
-                }
 
                 else if(creep.harvest(sources[creep.memory.source]) === ERR_NOT_IN_RANGE)
                 {
@@ -136,6 +129,7 @@ module.exports =
                 if(creep.carry[RESOURCE_ENERGY] === creep.carryCapacity)
                 {
                     creep.memory.mining = false;
+                    creep.memory.dropped_energy = false;
                 }
             }
             else
@@ -179,8 +173,6 @@ module.exports =
                 }
             }
         }
-
-
 
 
 

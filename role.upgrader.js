@@ -11,10 +11,21 @@ module.exports =
                 if (!name.includes("Upgrader-")) {continue;}
                 let creep = Game.creeps[name];
 
+                // sign room controller
+                // TODO: generalize user and message
+                if (spawn.room.controller.sign && spawn.room.controller.sign.username != "Dakes")
+                {
+                    if(creep.room.controller &&
+                        creep.signController(creep.room.controller, "Rikonton bot by Dakes") === ERR_NOT_IN_RANGE)
+                    {
+                        creep.moveTo(creep.room.controller);
+                    }
+                }
+
                 if(creep.store[RESOURCE_ENERGY] === 0)
                 {
                     if(Object.keys(Game.creeps).length < 3){return;}
-                    if(spawn.room.storage.store[RESOURCE_ENERGY] > 10000 &&
+                    if(spawn.room.storage && spawn.room.storage.store[RESOURCE_ENERGY] > 10000 &&
                         creep.withdraw(spawn.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
                     {
                         creep.moveTo(spawn.room.storage);
@@ -42,8 +53,7 @@ module.exports =
         }
         catch(e)
         {
-            console.log("error in Upgrader");
-            console.log(e);
+            console.log("error in Upgrader: ", e);
             // creep.memory.delivering = false;
         }
 
@@ -63,7 +73,7 @@ module.exports =
         if(spawn.room.storage && spawn.room.storage.store[RESOURCE_ENERGY] > 250000){total_creep_count = 2;}
         if(spawn.room.storage && spawn.room.storage.store[RESOURCE_ENERGY] > 500000){total_creep_count = 3;}
 
-        // get largest dropped energy stack. If more dropped energy, create more upgrader
+        // get largest dropped energy stack. If more dropped energy, create more upgrader. TODO: sum up all dropped energy
         let dropped = spawn.room.find(FIND_DROPPED_RESOURCES);
         let dropped_energy = false;
         for (let i in dropped)
@@ -76,10 +86,10 @@ module.exports =
                 }
             }
         }
-        if (dropped_energy.amount > 2000){total_creep_count += 1;}
+        if (dropped_energy.amount > 1000){total_creep_count += 2;}
+        if (dropped_energy.amount > 2000){total_creep_count += 2;}
         if (dropped_energy.amount > 3000){total_creep_count += 1;}
         if (dropped_energy.amount > 4000){total_creep_count += 1;}
-        if (dropped_energy.amount > 5000){total_creep_count += 1;}
 
         // only spawn upgrader, if there are at least 5 other creeps
         if(current_creeps < total_creep_count && ( Object.keys(Game.creeps).length > 7 ||

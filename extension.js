@@ -21,6 +21,8 @@ module.exports =
         const extensions = spawn.room.find(FIND_MY_STRUCTURES, {
             filter: { structureType: STRUCTURE_EXTENSION }
         });
+        console.log(extensions.length);
+        console.log(rc_level);
 
         // build extensions in clusters of 5 surrounded by streets in triangle shape to the left of Spawn
         let begin_coord = spawn.pos;
@@ -31,16 +33,14 @@ module.exports =
         {
             let cluster_count = level_extensions[rc_level]/5;
             let level_count = Math.ceil((cluster_count-1) /2 ) ;
-            //if (cluster_count = 1){level_count = 0;}
             build_diamond_shape(level_count, begin_coord);
 
         }
 
-        // console.log(myFunction(5, 4));
         /**
          * builds (expands) the bigger diamond shape for current level, each level has 2 more clusters
-         * @param cluster_count The number of cluster, that still need to be built
          * @param level The nth "shell" of the shape
+         * @param start_pos The starting position of the whole structure.
          */
         function build_diamond_shape(level, start_pos)
         {
@@ -54,15 +54,9 @@ module.exports =
             {
                 cluster_built = 0;
             }
-            // console.log("level: ", level);
-            // console.log("cluster built: ", cluster_built);
 
             // cluster count is level *2 + 1 if level starts at 0.
-            cluster_count = level * 2 + 1;
-
-            let cur_extensions = spawn.room.find(FIND_MY_STRUCTURES, {
-                            filter: function(object){return object.structureType === STRUCTURE_EXTENSION}
-                    });
+            let cluster_count = level * 2 + 1;
 
             let cur_pos = new RoomPosition(start_pos.x, start_pos.y, start_pos.roomName);
             cur_pos.x = cur_pos.x - level*2;
@@ -132,7 +126,7 @@ module.exports =
                 let street_pos = street_positions[i];
 
                 let found = street_pos.lookFor(LOOK_TERRAIN);
-                if(found.length && found[0].getTerrain() !== TERRAIN_MASK_WALL)
+                if(found.length && found[0] !== "wall")
                 {
                     street_pos.createConstructionSite(STRUCTURE_ROAD);
                 }

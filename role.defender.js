@@ -11,7 +11,7 @@ module.exports =
 {
     run(spawn)
     {
-        let total_creep_count = 2;
+        let total_creep_count = 0;
         // loop through creeps
 
         let enemies = spawn.room.find(FIND_HOSTILE_CREEPS);
@@ -37,7 +37,9 @@ module.exports =
         // spawn if total number is smaller and there are enemies in the room
         if(Object.keys(Game.creeps).length > 1 && creep_count < total_creep_count && enemies.length > 0)
         {
-            spawn.spawnCreep([ATTACK, ATTACK, MOVE, MOVE],
+            spawn.spawnCreep([ATTACK, ATTACK, MOVE, MOVE, TOUGH, MOVE, ATTACK, MOVE, MOVE, MOVE, ATTACK, MOVE, MOVE, ATTACK, ATTACK, MOVE, MOVE, 
+            ATTACK, TOUGH, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, ATTACK, TOUGH, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, ATTACK, TOUGH, MOVE, MOVE, 
+            MOVE, MOVE, MOVE, MOVE, ATTACK, TOUGH, MOVE, MOVE, ATTACK],
             spawn.name + '-' + 'Defender' + '-' + Game.time);
         }
 
