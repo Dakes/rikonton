@@ -1,3 +1,276 @@
+export {};
+// import {role} from "."
+
+export enum role
+{
+    PMINER      = 'Primitive_Miner',
+    MINER       = 'Miner',
+    CARRIER     = 'Carrier',
+    MCARRIER    = 'Miner_Carrier',
+    ECARRIER    = 'Extension_Carrier',
+    CONSTRUCTOR = 'Constructor',
+}
+
+declare global {
+
+
+    export interface CreepMemory
+    {
+        role: role;
+        // Home room
+        room: string;
+    }
+/*
+    export const PMINER      = role.PMINER     ;
+    export const MINER       = role.MINER      ;
+    export const CARRIER     = role.CARRIER    ;
+    export const MCARRIER    = role.MCARRIER   ;
+    export const ECARRIER    = role.ECARRIER   ;
+    export const CONSTRUCTOR = role.CONSTRUCTOR;
+
+    export const role = {PMINER: role.PMINER};
+    */
+}
+
+
+export class MyCreep extends Creep
+{
+    // memory: CreepMemory;
+
+    constructor(id: Id<Creep>)
+    {
+        super(id);
+        //this.memory = memory;
+    }
+}
+
+export interface EnergyCreepMemory extends CreepMemory
+{
+    scavenging: boolean; // If creep is collecting energy
+    resourceStack: Id<Resource> | Id<Tombstone> | Id<Ruin> | null;  // Stack to pick up from
+    retrieve: boolean;   // If creep is retrieving from storage
+    storing: boolean;    // If creep state is storing in storage, spawn etc.
+
+}
+
+export class EnergyCreep extends Creep
+{
+    // EnergyCreeps MUST have CARRY parts
+    // @ts-ignore
+    memory: EnergyCreepMemory;
+
+    constructor(id: Id<Creep>)
+    {
+        super(id);
+        //this.memory = memory;
+    }
+
+    /**
+     * Put resource into storage, spawn or central container etc.
+     * @returns: bool; If doing: true. If done: false
+     */
+    putAway(resource=RESOURCE_ENERGY): boolean
+    {
+        if (this.store.getUsedCapacity() == 0)
+        {
+            this.memory.storing = false;
+            return false;
+        }
+        let store = Game.rooms[this.memory.room].getStore();
+        console.log(store?.id);
+        if (store && this.transfer(store, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE)
+            this.moveTo(store);
+        return true;
+    }
+
+    checkResourceStack(): boolean
+    {
+        if (this.memory.resourceStack)
+            if (Game.getObjectById(this.memory.resourceStack))
+                return true;
+            this.memory.resourceStack = null;
+        return false;
+    }
+
+    clearResourceStack()
+    {
+        this.memory.resourceStack = null;
+    }
+
+    /**
+     * Pick up Energy from dropped, Tombstone, Ruin or dropped, set in memory: resourceStack
+     * @param resource: Resource const which to pick up.
+     * @returns: boolean; if doing: true. If done: false
+     */
+    scavenge(resource=RESOURCE_ENERGY): boolean
+    {
+        if (this.store.getFreeCapacity() < 10)
+        {
+            this.memory.scavenging = false;
+            return false;
+        }
+        if (!this.checkResourceStack())
+            this.setResourceStack(resource);
+        if (this.memory.resourceStack && this.memory.scavenging)
+        {
+            let obj = Game.getObjectById(this.memory.resourceStack)
+            if (obj instanceof Tombstone || obj instanceof Ruin)
+            {
+                if (this.withdraw(obj, resource) == ERR_NOT_IN_RANGE)
+                    this.moveTo(obj);
+                else
+                    this.clearResourceStack();
+                return true;
+            }
+            else if (obj instanceof Resource)
+            {
+                if (obj.resourceType != RESOURCE_ENERGY)
+                {
+                    this.clearResourceStack();
+                    return false;
+                }
+                if (this.pickup(obj) == ERR_NOT_IN_RANGE)
+                    this.moveTo(obj);
+                else
+                    this.clearResourceStack();
+                return true;
+            }
+        }
+        else if (!this.memory.resourceStack && this.memory.scavenging)
+        {
+            this.memory.scavenging = false;
+        }
+        if (this.store.getFreeCapacity() > 10)
+            return this.setResourceStack(resource);
+        else
+            this.memory.scavenging = false;
+
+        return false;
+    }
+
+    retrieveMineral(resource: MineralConstant)
+    {
+        // TODO: implement
+    }
+
+    setResourceStack(resource: ResourceConstant): boolean
+    {
+        let fcs: FindConstant[] = [FIND_DROPPED_RESOURCES, FIND_TOMBSTONES, FIND_RUINS]
+        for (let i in fcs)
+            if (this.findResourceStack(fcs[i], resource))
+                return true;
+        return false;
+    }
+
+    findResourceStack(find: FindConstant, resource: ResourceConstant): boolean
+    {
+        if (find != FIND_DROPPED_RESOURCES)
+        {
+            let finds: (Ruin | Tombstone)[] = this.room.find(find);
+            for (let i in finds)
+                if (finds[i]?.store.getUsedCapacity(resource) > 5)
+                {
+                    this.memory.resourceStack = finds[i].id;
+                    return true;
+                }
+        }
+        else
+        {
+            let finds: Resource[] = this.room.find(find);
+            for (let i in finds)
+                if (finds[i]?.resourceType === resource && finds[i]?.amount > 50)
+                {
+                    this.memory.resourceStack = finds[i].id;
+                    return true;
+                }
+        }
+        return false;
+    }
+}
+
+export interface MinerCreepMemory extends EnergyCreepMemory
+{
+    sourceId?: Id<Source> | null;
+    mining: boolean;
+}
+
+declare global {
+    interface MinerCreep extends EnergyCreep {
+        memory: MinerCreepMemory;
+        setRandomSource(): boolean;
+        mine(): boolean;
+    }
+}
+
+export class MinerCreep extends EnergyCreep
+{
+    // @ts-ignore
+    memory: MinerCreepMemory;
+
+    constructor(id: Id<Creep>)
+    {
+        super(id);
+        //this.memory = memory;
+    }
+
+    setRandomSource(): boolean
+    {
+        // Set source in memory, if unset
+        if (!this.memory.sourceId)
+        {
+            let sources = this.room.find(FIND_SOURCES);
+            let n = Game.time%sources.length;
+            this.memory.sourceId = sources[n].id;
+            return true
+        }
+        return false
+    }
+
+    mine(): boolean
+    {
+        if (!this.memory.resourceStack && this.store.getUsedCapacity() == 0)
+            this.memory.mining = true;
+        if (this.memory.sourceId && this.memory.mining)
+        {
+            let source = Game.getObjectById(this.memory.sourceId);
+            if (source && this.harvest(source) == ERR_NOT_IN_RANGE)
+                this.moveTo(source);
+            if (this.store.getFreeCapacity() == 0)
+                this.memory.mining = false
+            return true
+        }
+        return false;
+    }
+
+    moveToMiningPos(): boolean
+    {
+        return false;
+    }
+
+    /**
+     * Set a source per role. Only one Source can be served by each role.
+     */
+    setRoleSource()
+    {
+
+    }
+
+
+
+}
+
+    /*
+    interface EnergyCreep extends Creep
+    {
+        memory: EnergyCreepMemory
+    }
+    */
+//}
+
+Object.defineProperties(MinerCreep.prototype, {
+
+
+});
 
 Object.defineProperties(Creep.prototype, {
   /*
@@ -16,8 +289,10 @@ Object.defineProperties(Creep.prototype, {
   payload: {
     configurable: true,
     get(this: Creep): number { return this.store.getCapacity() - this.store.getFreeCapacity() || 0; }
-  }
+  },
+
 });
+
 
 /*
 Creep.prototype.isEmpty = function(this: Creep) {

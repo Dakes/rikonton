@@ -1,7 +1,4 @@
-import './creep';
-/*
-import './global';
-import './room';
-import './room_position';
-import './structure';
-*/
+import "./room"
+export * from "./creep"
+export * from "./room"
+

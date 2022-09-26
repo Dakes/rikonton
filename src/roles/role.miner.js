@@ -7,7 +7,7 @@ module.exports =
 
         for (let name in Game.creeps)
         {
-            if (!name.includes("Miner-"))
+            if (!name.includes("Miner-") || name.includes("Primitive_Miner"))
             {
                 continue;
             }
@@ -44,7 +44,7 @@ module.exports =
             if (creep.memory.source_id !== false)
             {
                 let source = Game.getObjectById(creep.memory.source_id);
-                
+
                 for(let i in spawn.room.memory.container_pos)
                 {
                     let container = spawn.room.memory.container_pos[i];
@@ -59,7 +59,7 @@ module.exports =
                         else
                         {
                             let t = creep.moveTo(container_pos);
-                            
+
                         }
                     }
 

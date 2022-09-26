@@ -1,6 +1,8 @@
+import {role} from "./augmentations/creep"
 import { ErrorMapper } from "./utils/ErrorMapper";
 // import { Game } from "../test/unit/mock";
 import { spawnCreeps } from "./spawner";
+import runPminer from "./roles/primitive_miner"
 import './augmentations';
 
 // legacy imports
@@ -9,7 +11,7 @@ import * as constructors from       "./roles/role.constructor"
 import * as miner_carriers from     "./roles/role.miner_carrier"
 import * as carriers from           "./roles/role.carrier"
 import * as extension_carriers from "./roles/role.extension_carrier"
-import * as primitive_miners from   "./roles/role.primitive_miner"
+// import * as primitive_miners from   "./roles/role.primitive_miner"
 import * as upgrader from           "./roles/role.upgrader"
 import * as miners from             "./roles/role.miner"
 import * as roads from              "./roles/road"
@@ -35,13 +37,14 @@ declare global
         uuid: number;
         log: any;
     }
-
+    /*
     interface CreepMemory
     {
         role: string;
         room: string;
         working: boolean;
     }
+    */
 
     // Syntax for adding proprties to `global` (ex "global.log")
     namespace NodeJS
@@ -75,7 +78,7 @@ function manageRoom(room: Room)
 
     miners.run(spawn);
     defenders.run(spawn);
-    primitive_miners.run(spawn);
+    // primitive_miners.run(spawn);
 
     miner_carriers.run(spawn);
     extension_carriers.run(spawn);
@@ -87,26 +90,40 @@ function manageRoom(room: Room)
     towers.run(spawn);
     structures.run(spawn);
     extensions.run(spawn);
+    // legacy code END
 
-
-
+    spawnCreeps(room);
     /*
     try
     {
         spawnCreeps(room);
     } catch (ex)
     {
-        console.log('Error during spawnCreeps');
+        console.log('Error during spawnCreeps:');
         console.log(ex);
     }
+    */
+
+    _.forEach(room.find(FIND_MY_CREEPS), (creep: Creep) => {
+        switch (creep.memory.role)
+        {
+            case role.PMINER:
+                runPminer(creep, room);
+        }
+    })
     try
     {
-        runCreeps(room);
+
     } catch (ex)
     {
-        console.log('Error during manageTasks');
+        console.log('Error during Creep code execution');
         console.log(ex);
     }
+
+
+
+    /*
+
     try
     {
         manageTowers(room);
