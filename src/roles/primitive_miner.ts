@@ -4,41 +4,50 @@
  * Only used at the very beginning of the game.
  */
 
-import { MinerCreep } from "../augmentations/creep"
+import { MinerCreep, task } from "../augmentations/creep"
 // import {CreepMemory} from "../augmentations/creep"
 
-/*
-interface PminerMemory extends EnergyCreepMemory
-{
-    sourceId?: Id<Source>;
-}
 
-interface Pminer extends EnergyCreep
+/**
+ * ->* ->Scavenging -> Mining -> storing* -> upgrading*
+ *
+ * @param creep
+ * @param r Room
+ * @returns
+ */
+export function run(creep: Creep, r: Room)
 {
-    memory: PminerMemory;
-}
-*/
-
-export default function run(creep: Creep, r: Room)
-{
-    let c: MinerCreep = new MinerCreep(creep.id)//creep as MinerCreep;
+    let c: MinerCreep = new MinerCreep(creep.id);//creep as MinerCreep;
     c.setRandomSource();
     c.checkResourceStack();
-
-    if (!c.memory.storing && c.store.getFreeCapacity(RESOURCE_ENERGY) == 0)
-        c.memory.storing = true;
-
-    if (c.memory.storing)
-        if (c.putAway())
-            return;
-
-    if (!c.memory.scavenging && !c.memory.mining)
-        c.memory.scavenging = true;
 
     if (c.scavenge())
         return;
 
-    // TODO: upgrade
-    c.mine();
+    if (!c.memory.task && c.freeCapacity() > 0)
+        c.memory.task = task.MINING;
+
+    if (c.mine())
+        return;
+
+    if (c.freeCapacity() == 0 && r.getStore()?.store.getFreeCapacity(RESOURCE_ENERGY))
+        c.memory.task = task.STORING;
+    else
+        c.memory.task = task.UPGRADING;
+
+    if (c.putAway())
+        return;
+
+    if (c.payload() > 0)
+        c.memory.task = task.UPGRADING;
+    else
+        c.memory.task = task.SCAVENGING;
+
+
+    if (c.upgradeCont())
+        return;
+
+    c.memory.task = task.SCAVENGING;
+    c.say("Now going scavenging");
 }
 

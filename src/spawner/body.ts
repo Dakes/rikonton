@@ -89,4 +89,7 @@ export class Body
 
 export const BODIES: { readonly [type: string]: Body } = {
     [role.PMINER]: new Body(role.PMINER, 5, 0, bodyTypes.PMINER),
+    // TODO: set dynamically depending on source
+    [role.MINER]: new Body(role.MINER, 4, 1, bodyTypes.MINER),
+    [role.UPGRADER]: new Body(role.UPGRADER, 1, 1, bodyTypes.WORKER),
 };

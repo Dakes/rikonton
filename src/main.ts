@@ -2,7 +2,9 @@ import {role} from "./augmentations/creep"
 import { ErrorMapper } from "./utils/ErrorMapper";
 // import { Game } from "../test/unit/mock";
 import { spawnCreeps } from "./spawner";
-import runPminer from "./roles/primitive_miner"
+import * as pMiner from "./roles/primitive_miner"
+import * as miner from "./roles/miner"
+import * as upgrader from "./roles/upgrader"
 import './augmentations';
 
 // legacy imports
@@ -12,8 +14,8 @@ import * as miner_carriers from     "./roles/role.miner_carrier"
 import * as carriers from           "./roles/role.carrier"
 import * as extension_carriers from "./roles/role.extension_carrier"
 // import * as primitive_miners from   "./roles/role.primitive_miner"
-import * as upgrader from           "./roles/role.upgrader"
-import * as miners from             "./roles/role.miner"
+// import * as upgrader from           "./roles/role.upgrader"
+// import * as miners from             "./roles/role.miner"
 import * as roads from              "./roles/road"
 import * as towers from             "./roles/tower"
 import * as extensions from         "./roles/extension"
@@ -71,28 +73,8 @@ export const loop = ErrorMapper.wrapLoop(() =>
 
 function manageRoom(room: Room)
 {
-
-    // legacy code
-    let spawns = room.find(FIND_MY_SPAWNS);
-    let spawn = spawns[Game.time%spawns.length];
-
-    miners.run(spawn);
-    defenders.run(spawn);
-    // primitive_miners.run(spawn);
-
-    miner_carriers.run(spawn);
-    extension_carriers.run(spawn);
-    constructors.run(spawn);
-    carriers.run(spawn);
-    upgrader.run(spawn);
-
-    roads.run(spawn);
-    towers.run(spawn);
-    structures.run(spawn);
-    extensions.run(spawn);
-    // legacy code END
-
     spawnCreeps(room);
+
     /*
     try
     {
@@ -108,9 +90,37 @@ function manageRoom(room: Room)
         switch (creep.memory.role)
         {
             case role.PMINER:
-                runPminer(creep, room);
+                pMiner.run(creep, room);
+                break;
+            case role.MINER:
+                miner.run(creep, room);
+                break;
+            case role.UPGRADER:
+                upgrader.run(creep, room);
+                break;
         }
-    })
+    });
+
+    // legacy code
+    let spawns = room.find(FIND_MY_SPAWNS);
+    let spawn = spawns[Game.time%spawns.length];
+
+    // miners.run(spawn);
+    //defenders.run(spawn);
+    // primitive_miners.run(spawn);
+
+    miner_carriers.run(spawn);
+    extension_carriers.run(spawn);
+    constructors.run(spawn);
+    carriers.run(spawn);
+    // upgrader.run(spawn);
+
+    roads.run(spawn);
+    towers.run(spawn);
+    structures.run(spawn);
+    extensions.run(spawn);
+    // legacy code END
+
     try
     {
 

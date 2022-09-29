@@ -1,3 +1,6 @@
+import exp from "constants";
+import { InvalidatedProjectKind } from "typescript";
+
 export {};
 // import {role} from "."
 
@@ -9,27 +12,30 @@ export enum role
     MCARRIER    = 'Miner_Carrier',
     ECARRIER    = 'Extension_Carrier',
     CONSTRUCTOR = 'Constructor',
+    UPGRADER    = 'Upgrader',
+}
+
+// Which task to save in memory
+export enum task
+{
+    NONE,          // 0, Spiritual Support
+    STORING,       // 1, Creep is storing in storage, spawn etc
+    RETRIEVING,    // 2, Creep is retrieving from storage
+    SCAVENGING,    // 3, Creep is collecting energy
+    MINING,        // 4,
+    UPGRADING,     // 5,
+    CONSTRUCTING,  // 6,
+    REPAIRING,     // 7,
 }
 
 declare global {
-
-
     export interface CreepMemory
     {
         role: role;
         // Home room
         room: string;
+        task: task;  // current task creep is working on
     }
-/*
-    export const PMINER      = role.PMINER     ;
-    export const MINER       = role.MINER      ;
-    export const CARRIER     = role.CARRIER    ;
-    export const MCARRIER    = role.MCARRIER   ;
-    export const ECARRIER    = role.ECARRIER   ;
-    export const CONSTRUCTOR = role.CONSTRUCTOR;
-
-    export const role = {PMINER: role.PMINER};
-    */
 }
 
 
@@ -42,20 +48,20 @@ export class MyCreep extends Creep
         super(id);
         //this.memory = memory;
     }
+
+
+
 }
 
 export interface EnergyCreepMemory extends CreepMemory
 {
-    scavenging: boolean; // If creep is collecting energy
     resourceStack: Id<Resource> | Id<Tombstone> | Id<Ruin> | null;  // Stack to pick up from
-    retrieve: boolean;   // If creep is retrieving from storage
-    storing: boolean;    // If creep state is storing in storage, spawn etc.
 
 }
 
-export class EnergyCreep extends Creep
+export class EnergyCreep extends MyCreep
 {
-    // EnergyCreeps MUST have CARRY parts
+    // EnergyCreeps should have CARRY parts
     // @ts-ignore
     memory: EnergyCreepMemory;
 
@@ -71,18 +77,47 @@ export class EnergyCreep extends Creep
      */
     putAway(resource=RESOURCE_ENERGY): boolean
     {
-        if (this.store.getUsedCapacity() == 0)
+        if (this.memory.task != task.STORING)
+            return false;
+        let store = Game.rooms[this.memory.room].getStore();
+
+        if (this.store.getUsedCapacity() == 0 || store?.store.getFreeCapacity(resource) == 0)
         {
-            this.memory.storing = false;
+            this.memory.task = task.NONE;
             return false;
         }
-        let store = Game.rooms[this.memory.room].getStore();
-        console.log(store?.id);
         if (store && this.transfer(store, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE)
             this.moveTo(store);
         return true;
     }
 
+    freeCapacity(resource=RESOURCE_ENERGY)
+    {
+        return this.store.getFreeCapacity(resource);
+    }
+
+    /**
+     * @param resource. If null: combined capacity. If ResourceConstant, just of that type.
+     * @returns payload number.
+     */
+    payload(resource: ResourceConstant | null = null)
+    {
+        if (resource == null)
+            return this.store.getCapacity() - this.store.getFreeCapacity() || 0;
+        else
+            return this.store[resource];
+    }
+
+    totalCapacity()
+    {
+        return this.store.getCapacity() - this.store.getFreeCapacity() || 0;
+    }
+
+
+    /**
+     * Clears the Resource Stack, if Invalid.
+     * @returns true if Resource Stack exists. Else false.
+     */
     checkResourceStack(): boolean
     {
         if (this.memory.resourceStack)
@@ -104,14 +139,17 @@ export class EnergyCreep extends Creep
      */
     scavenge(resource=RESOURCE_ENERGY): boolean
     {
-        if (this.store.getFreeCapacity() < 10)
+        if (this.memory.task != task.SCAVENGING)
+            return false;
+
+        if (this.store.getFreeCapacity() == 0)
         {
-            this.memory.scavenging = false;
+            this.memory.task = task.NONE;
             return false;
         }
         if (!this.checkResourceStack())
             this.setResourceStack(resource);
-        if (this.memory.resourceStack && this.memory.scavenging)
+        if (this.memory.resourceStack)
         {
             let obj = Game.getObjectById(this.memory.resourceStack)
             if (obj instanceof Tombstone || obj instanceof Ruin)
@@ -124,9 +162,10 @@ export class EnergyCreep extends Creep
             }
             else if (obj instanceof Resource)
             {
-                if (obj.resourceType != RESOURCE_ENERGY)
+                if (obj.resourceType != resource)
                 {
                     this.clearResourceStack();
+                    this.memory.task = task.NONE;
                     return false;
                 }
                 if (this.pickup(obj) == ERR_NOT_IN_RANGE)
@@ -136,21 +175,48 @@ export class EnergyCreep extends Creep
                 return true;
             }
         }
-        else if (!this.memory.resourceStack && this.memory.scavenging)
-        {
-            this.memory.scavenging = false;
-        }
-        if (this.store.getFreeCapacity() > 10)
-            return this.setResourceStack(resource);
         else
-            this.memory.scavenging = false;
+        {
+            this.memory.task = task.NONE;
+        }
 
+        if (this.store.getFreeCapacity() != 0)
+            this.setResourceStack(resource);
+
+        if (this.checkResourceStack())
+            return true;
+
+        this.memory.task = task.NONE;
         return false;
     }
 
-    retrieveMineral(resource: MineralConstant)
+    /**
+     * Get Resources from central storage.
+     * @param resource
+     * @returns True if doing. False if done.
+     */
+    retrieve(resource: MineralConstant | ResourceConstant = RESOURCE_ENERGY): boolean
     {
-        // TODO: implement
+        if (this.memory.task != task.RETRIEVING)
+            return false;
+        let store = this.room.getStore();
+        if (store)
+        {
+            if (store.store.getUsedCapacity(resource) == 0)
+                return true;
+            if (store.structureType == STRUCTURE_SPAWN &&
+                // @ts-ignore
+                store.store.getUsedCapacity(resource) < 300)
+                return true;
+            if (store && this.withdraw(store, resource) == ERR_NOT_IN_RANGE)
+            {
+                this.moveTo(store);
+                return true;
+            }
+        }
+        if (this.payload(resource) == this.store.getCapacity(resource))
+            this.memory.task = task.NONE;
+        return false;
     }
 
     setResourceStack(resource: ResourceConstant): boolean
@@ -188,21 +254,49 @@ export class EnergyCreep extends Creep
     }
 }
 
-export interface MinerCreepMemory extends EnergyCreepMemory
+export interface WorkerCreepMemory extends EnergyCreepMemory
+{
+    working: boolean;  // TODO: remove?
+}
+
+export class WorkerCreep extends EnergyCreep
+{
+    // @ts-ignore
+    memory: WorkerCreepMemory;
+
+    constructor(id: Id<Creep>)
+    {
+        super(id);
+    }
+
+    /**
+     *
+     * @returns True if doing. False if done.
+     */
+    upgradeCont()
+    {
+        if (this.memory.task != task.UPGRADING)
+            return false;
+        let cont = this.room.controller;
+        if (cont && this.payload(RESOURCE_ENERGY) > 0)
+        {
+            if (this.upgradeController(cont) == ERR_NOT_IN_RANGE)
+                this.moveTo(cont);
+            return true;
+        }
+        this.memory.task = task.NONE;
+        return false;
+    }
+
+}
+
+export interface MinerCreepMemory extends WorkerCreepMemory
 {
     sourceId?: Id<Source> | null;
-    mining: boolean;
 }
 
-declare global {
-    interface MinerCreep extends EnergyCreep {
-        memory: MinerCreepMemory;
-        setRandomSource(): boolean;
-        mine(): boolean;
-    }
-}
 
-export class MinerCreep extends EnergyCreep
+export class MinerCreep extends WorkerCreep
 {
     // @ts-ignore
     memory: MinerCreepMemory;
@@ -226,18 +320,27 @@ export class MinerCreep extends EnergyCreep
         return false
     }
 
+    /**
+     * Harvest from Source
+     * @returns True if doing. False if done.
+     */
     mine(): boolean
     {
-        if (!this.memory.resourceStack && this.store.getUsedCapacity() == 0)
-            this.memory.mining = true;
-        if (this.memory.sourceId && this.memory.mining)
+        if (this.memory.task != task.MINING)
+            return false;
+        if (this.memory.sourceId)
         {
             let source = Game.getObjectById(this.memory.sourceId);
-            if (source && this.harvest(source) == ERR_NOT_IN_RANGE)
-                this.moveTo(source);
+            if (source)
+                if (this.harvest(source) == ERR_NOT_IN_RANGE)
+                {
+                    this.moveTo(source);
+                    return true;
+                }
             if (this.store.getFreeCapacity() == 0)
-                this.memory.mining = false
-            return true
+                this.memory.task = task.NONE;
+            else
+                return true;
         }
         return false;
     }
@@ -266,32 +369,6 @@ export class MinerCreep extends EnergyCreep
     }
     */
 //}
-
-Object.defineProperties(MinerCreep.prototype, {
-
-
-});
-
-Object.defineProperties(Creep.prototype, {
-  /*
-  color: {
-    configurable: true,
-    get(this: Creep): string { return '#' + this.id.substr(18, 6); }
-  },*/
-  energy: {
-    configurable: true,
-    get(this: Creep): number { return this.store[RESOURCE_ENERGY]; }
-  },
-  energyCapacity: {
-    configurable: true,
-    get(this: Creep): number { return this.store.getFreeCapacity(RESOURCE_ENERGY); }
-  },
-  payload: {
-    configurable: true,
-    get(this: Creep): number { return this.store.getCapacity() - this.store.getFreeCapacity() || 0; }
-  },
-
-});
 
 
 /*

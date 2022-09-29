@@ -6,7 +6,7 @@ declare global {
     interface Room
     {
         readonly prototype: Room;
-        getStore(): Structure | null;
+        getStore(): StructureSpawn | StructureContainer | StructureStorage | null;
         getMyStructures(struct: StructureConstant, cache: VariableDeclaration): Structure[];
         myActiveStructures(): Structure[];
         _myActiveStructures?: Structure[];
