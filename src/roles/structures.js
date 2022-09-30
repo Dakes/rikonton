@@ -54,12 +54,13 @@ module.exports =
         {
             spawn.room.memory.container_pos = [];
             console.log("setting container positions");
+
             let room_terrain = Game.map.getRoomTerrain(spawn.room.name)
             let sources = spawn.room.find(FIND_SOURCES);
             for (let i in sources)
             {
                 let source = sources[i];
-                source_positions_around = positions_around(source.pos);
+                let source_positions_around = positions_around(source.pos);
                 //check for plain or swamp
                 for(let i in source_positions_around)
                 {

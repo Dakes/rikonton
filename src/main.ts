@@ -5,7 +5,11 @@ import { spawnCreeps } from "./spawner";
 import * as pMiner from "./roles/primitive_miner"
 import * as miner from "./roles/miner"
 import * as upgrader from "./roles/upgrader"
+import * as carrier from "./roles/carrier"
+import * as room from "./augmentations/room"
 import './augmentations';
+
+import { constructContainers } from "structures/containers";
 
 // legacy imports
 import * as defenders from          "./roles/role.defender"
@@ -25,28 +29,11 @@ import * as structures from         "./roles/structures"
 
 declare global
 {
-    /*
-    Example types, expand on these or remove them and add your own.
-    Note: Values, properties defined here do no fully *exist* by this type definiton alone.
-    You must also give them an implemention if you would like to use them. (ex. actually setting a `role` property in a Creeps memory)
-
-    Types added in this `global` block are in an ambient, global context. This is needed because `main.ts` is a module file (uses import or export).
-    Interfaces matching on name from @types/screeps will be merged. This is how you can extend the 'built-in' interfaces from @types/screeps.
-    */
-    // Memory extension samples
     interface Memory
     {
         uuid: number;
         log: any;
     }
-    /*
-    interface CreepMemory
-    {
-        role: string;
-        room: string;
-        working: boolean;
-    }
-    */
 
     // Syntax for adding proprties to `global` (ex "global.log")
     namespace NodeJS
@@ -58,10 +45,13 @@ declare global
     }
 }
 
+_.forEach(Game.rooms, (r: Room) => {r.initRoomMemory()});
+
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() =>
 {
+    console.log();
     console.log(`Current game tick is ${Game.time}`);
 
     _.each(Game.rooms, manageRoom);
@@ -73,9 +63,7 @@ export const loop = ErrorMapper.wrapLoop(() =>
 
 function manageRoom(room: Room)
 {
-    spawnCreeps(room);
 
-    /*
     try
     {
         spawnCreeps(room);
@@ -84,7 +72,6 @@ function manageRoom(room: Room)
         console.log('Error during spawnCreeps:');
         console.log(ex);
     }
-    */
 
     _.forEach(room.find(FIND_MY_CREEPS), (creep: Creep) => {
         switch (creep.memory.role)
@@ -98,9 +85,20 @@ function manageRoom(room: Room)
             case role.UPGRADER:
                 upgrader.run(creep, room);
                 break;
+            case role.ECARRIER:
+                carrier.runExtensionCarrier(creep, room);
+                break;
         }
     });
 
+    // Build structures
+    if (Game.time % 1000 == 0)
+    {
+        constructContainers(room);
+    }
+
+
+    /*
     // legacy code
     let spawns = room.find(FIND_MY_SPAWNS);
     let spawn = spawns[Game.time%spawns.length];
@@ -120,6 +118,7 @@ function manageRoom(room: Room)
     structures.run(spawn);
     extensions.run(spawn);
     // legacy code END
+    */
 
     try
     {

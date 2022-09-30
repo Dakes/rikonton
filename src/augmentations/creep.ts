@@ -1,5 +1,7 @@
 import exp from "constants";
+import { positionSquare } from "helpers/positions";
 import { InvalidatedProjectKind } from "typescript";
+import { isNullOrUndefined } from "util";
 
 export {};
 // import {role} from "."
@@ -22,11 +24,25 @@ export enum task
     STORING,       // 1, Creep is storing in storage, spawn etc
     RETRIEVING,    // 2, Creep is retrieving from storage
     SCAVENGING,    // 3, Creep is collecting energy
-    MINING,        // 4,
-    UPGRADING,     // 5,
-    CONSTRUCTING,  // 6,
-    REPAIRING,     // 7,
+    FILLING,       // 4, Fill buildings with energy
+    MINING,        // 5,
+    UPGRADING,     // 6,
+    CONSTRUCTING,  // 7,
+    REPAIRING,     // 8,
 }
+
+
+const taskToStr: { [key in task]: string} = {
+    [task.NONE]: "虚",
+    [task.STORING]: "入庫に行きます",
+    [task.RETRIEVING]: "引出す",
+    [task.SCAVENGING]: "ゴミ漁りに行きます",
+    [task.FILLING]: "いっぱいにする",
+    [task.MINING]: "採掘に行きます",
+    [task.UPGRADING]: "アップグレードする",
+    [task.CONSTRUCTING]: "工事する",
+    [task.REPAIRING]: "直す",
+};
 
 declare global {
     export interface CreepMemory
@@ -38,25 +54,18 @@ declare global {
     }
 }
 
-
 export class MyCreep extends Creep
 {
-    // memory: CreepMemory;
-
     constructor(id: Id<Creep>)
     {
         super(id);
         //this.memory = memory;
     }
-
-
-
 }
 
 export interface EnergyCreepMemory extends CreepMemory
 {
     resourceStack: Id<Resource> | Id<Tombstone> | Id<Ruin> | null;  // Stack to pick up from
-
 }
 
 export class EnergyCreep extends MyCreep
@@ -68,7 +77,19 @@ export class EnergyCreep extends MyCreep
     constructor(id: Id<Creep>)
     {
         super(id);
-        //this.memory = memory;
+    }
+
+    /**
+     * Update task. Also says what task was switched to.
+     * @param tsk: task to update memory to.
+     */
+    task(tsk:task=task.NONE)
+    {
+        if (this.memory.task != tsk)
+        {
+            this.memory.task = tsk;
+            this.say(taskToStr[tsk]);
+        }
     }
 
     /**
@@ -221,7 +242,7 @@ export class EnergyCreep extends MyCreep
 
     setResourceStack(resource: ResourceConstant): boolean
     {
-        let fcs: FindConstant[] = [FIND_DROPPED_RESOURCES, FIND_TOMBSTONES, FIND_RUINS]
+        let fcs: FindConstant[] = [FIND_DROPPED_RESOURCES, FIND_RUINS, FIND_TOMBSTONES]
         for (let i in fcs)
             if (this.findResourceStack(fcs[i], resource))
                 return true;
@@ -243,6 +264,8 @@ export class EnergyCreep extends MyCreep
         else
         {
             let finds: Resource[] = this.room.find(find);
+            // without shuffle creeps always prefer the same stack
+            finds = _.shuffle(finds);
             for (let i in finds)
                 if (finds[i]?.resourceType === resource && finds[i]?.amount > 50)
                 {
@@ -250,6 +273,57 @@ export class EnergyCreep extends MyCreep
                     return true;
                 }
         }
+        return false;
+    }
+
+    /**
+     * Fill thes given structures.
+     * @param struct structureConstant to search and then fill.
+     * @returns true if doing. false if done
+     */
+    fillExtension(): boolean
+    {
+        if (this.memory.task != task.FILLING)
+            return false;
+        if (this.totalCapacity() < 50)
+        {
+            this.memory.task = task.NONE;
+            return false;
+        }
+
+        let exts: StructureExtension[] =
+            this.room.myStructures(STRUCTURE_EXTENSION) as StructureExtension[];
+        let ext: StructureExtension|null = null;
+        let nearExt: StructureExtension|null = null;
+        for (let i in exts)
+        {
+            if (exts[i].store.getFreeCapacity(RESOURCE_ENERGY) == 0)
+                continue;
+            if (nearExt == null && this.pos.isNearTo(exts[i]))
+            {
+                nearExt = exts[i];
+                break;
+            }
+            if (ext == null)
+                ext = exts[i];
+        }
+        if (nearExt)
+            ext = nearExt;
+        if (ext == null)
+            return true;
+        if (this.transfer(ext, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE)
+            this.moveTo(ext);
+
+        return true;
+    }
+
+    /**
+     * Check extensions around creep and fill them, it they have space.
+     * @returns true, if one was filled. false if there is none.
+     */
+    fillAdjadentExtensions(): boolean
+    {
+        let adjPos = positionSquare(this.pos);
         return false;
     }
 }
@@ -300,10 +374,13 @@ export class MinerCreep extends WorkerCreep
 {
     // @ts-ignore
     memory: MinerCreepMemory;
+    // cached position for miner to walk to
+    _minerPos: RoomPosition | null;
 
     constructor(id: Id<Creep>)
     {
         super(id);
+        this._minerPos = null;
         //this.memory = memory;
     }
 
@@ -315,9 +392,43 @@ export class MinerCreep extends WorkerCreep
             let sources = this.room.find(FIND_SOURCES);
             let n = Game.time%sources.length;
             this.memory.sourceId = sources[n].id;
-            return true
+            return true;
         }
         return false
+    }
+
+    /**
+     * Set a source per role. Only a set amount of creeps serve one source.
+     * @returns true, if set. false on error, if not set.
+     */
+    setRoleSource(r: role, num: number=1): boolean
+    {
+        if (this.memory.sourceId)
+            return true;
+
+        // TODO: make compatible with other creep types
+        let miners: MinerCreep[] = this.room.myCreeps(role.MINER) as MinerCreep[];
+        const sources = this.room.find(FIND_SOURCES);
+
+        for (let i in sources)
+        {
+            let sid: Id<Source> = sources[i].id;
+            let snum = num;
+            // check if id is used by other miners
+            for (let m in miners)
+            {
+                if (miners[m].memory.sourceId == sid)
+                {
+                    snum--;
+                }
+            }
+            if (snum > 0)
+            {
+                this.memory.sourceId = sid;
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -345,44 +456,36 @@ export class MinerCreep extends WorkerCreep
         return false;
     }
 
+    /**
+     * Move miner to their designated position
+     * @returns true if moving. false if it arrived.
+     */
     moveToMiningPos(): boolean
     {
+        if (!this._minerPos)
+        {
+            for(let i in this.room.memory.ContainerPos)
+            {
+                const contPos = this.room.memory.ContainerPos[i];
+                if (contPos.id == this.memory.sourceId)
+                    this._minerPos = contPos.pos;
+            }
+        }
+        if (this._minerPos != null &&  this.pos.x != this._minerPos.x && this.pos.y != this._minerPos.y)
+        {
+            this.moveTo(this._minerPos.x, this._minerPos.y);
+            return true;
+        }
         return false;
-    }
-
-    /**
-     * Set a source per role. Only one Source can be served by each role.
-     */
-    setRoleSource()
-    {
-
     }
 
 
 
 }
 
-    /*
-    interface EnergyCreep extends Creep
-    {
-        memory: EnergyCreepMemory
-    }
-    */
-//}
 
 
 /*
-Creep.prototype.isEmpty = function(this: Creep) {
-  return this.store.getFreeCapacity() > 0 && this.payload === 0;
-};
-
-Creep.prototype.isFull = function(this: Creep) {
-  return this.payload === this.carryCapacity;
-};
-
-Creep.prototype.toString = function(this: Creep) {
-  return `<font color="${this.color}">${this.name}</font>`;
-};
 
 Creep.prototype.canMoveTo = function(this: Creep, xOrPos: number|RoomPosition, y?: number, roomName?: string): boolean {
   if (xOrPos instanceof RoomPosition) {

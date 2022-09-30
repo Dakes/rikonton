@@ -3,38 +3,37 @@ import * as creepy from "../augmentations/creep"
 
 
 // Basic Body Types. Multiple roles can have the same body type.
-/*
 enum BodyTypeName
 {
-    MINER  ,  //= "Miner",
-    PMINER ,  //= "Primitive_Miner",
-    CARRIER,  //= "Carrier",
-    WORKER ,  //= "Worker",
-    FIGHTER,  //= "Fighter",
-    HEALER ,  //= "Healer",
-    CLAIMER,  //= "Claimer",
+    MINER=  "MINER"    ,
+    PMINER= "PMINER"   ,
+    CARRIER="CARRIER"  ,
+    WORKER= "WORKER"   ,
+    FIGHTER="FIGHTER"  ,
+    HEALER= "HEALER"   ,
+    CLAIMER="CLAIMER"  ,
 }
-*/
 
-
-/*
-interface bodyTypes
-{
-    [key: string]: [BodyPartConstant[], BodyPartConstant[]]
-}
-*/
-//const bodyTypes: {[key in keyof typeof BodyTypeName]: [BodyPartConstant[], BodyPartConstant[]]} = {
-const bodyTypes: {[key: string]: [BodyPartConstant[], BodyPartConstant[]]} = {
-    MINER: [[MOVE, WORK, WORK], [WORK]],
-    PMINER: [[MOVE, WORK, CARRY, CARRY, CARRY], []],
-    CARRIER: [[MOVE, CARRY, CARRY, CARRY, CARRY, CARRY], [MOVE, CARRY]],
-    WORKER: [[MOVE, CARRY, CARRY, CARRY, WORK], [MOVE, CARRY, WORK]],
-    FIGHTER: [[TOUGH, TOUGH, TOUGH, TOUGH, ATTACK, ATTACK, MOVE, MOVE], [TOUGH, TOUGH, ATTACK, MOVE]],
-    HEALER: [[TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, HEAL], [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, HEAL]],
-    CLAIMER: [[], []],
-
+const bodyTypes: {[key in BodyTypeName]: [BodyPartConstant[], BodyPartConstant[]]} = {
+    [BodyTypeName.MINER]   : [[MOVE, WORK, WORK], [WORK]],
+    [BodyTypeName.PMINER]  : [[MOVE, WORK, CARRY, CARRY, CARRY], []],
+    [BodyTypeName.CARRIER] : [[MOVE, CARRY, CARRY, CARRY, CARRY, CARRY], [MOVE, CARRY]],
+    [BodyTypeName.WORKER]  : [[MOVE, CARRY, CARRY, CARRY, WORK], [MOVE, CARRY, WORK]],
+    [BodyTypeName.FIGHTER] : [[TOUGH, TOUGH, TOUGH, TOUGH, ATTACK, ATTACK, MOVE, MOVE], [TOUGH, TOUGH, ATTACK, MOVE]],
+    [BodyTypeName.HEALER]  : [[TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, HEAL], [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, HEAL]],
+    [BodyTypeName.CLAIMER] : [[], []],
 };
 
+const bodyPartEnergy: {[key in BodyPartConstant]: number} = {
+    [MOVE]:          50,
+    [WORK]:          100,
+    [CARRY]:         50,
+    [ATTACK]:        80,
+    [RANGED_ATTACK]: 150,
+    [HEAL]:          250,
+    [CLAIM]:         600,
+    [TOUGH]:         10,
+}
 
 export class Body
 {
@@ -51,8 +50,6 @@ export class Body
         // public readonly bodyAdd: BodyPartConstant[],
     )
     {
-        console.log("Body Constructor:");
-        console.log("here:", role);
 
     }
 
@@ -62,21 +59,32 @@ export class Body
     }
 
     // TODO: redo (availableEnergy)
-    public getBody(energy: Number): BodyPartConstant[]
+    public getBody(energy: number): BodyPartConstant[]
     {
-        return this.body[0];
-        /*
-        const body: BodyPartConstant[] = [];
-        for (const part of this.body)
+        let newBody: BodyPartConstant[] = [];
+        newBody = this.body[0];
+        energy -= this.getEnergyDemand(newBody);
+
+        const appendEnergy = this.getEnergyDemand(this.body[1]);
+        while (energy >= appendEnergy && energy > 0 && appendEnergy > 0)
         {
-            for (let i = 0; i < size; i++)
-            {
-                body.push(part);
-            }
+            newBody.push(...this.body[1]);
+            energy -= appendEnergy;
         }
-        body.push(MOVE);
-        return body;
-        */
+
+        console.log("Body: ", newBody);
+        console.log("Energy Demand: ", this.getEnergyDemand(newBody));
+        return newBody;
+    }
+
+    getEnergyDemand(body: BodyPartConstant[]): number
+    {
+        let en: number = 0;
+        for (let i in body)
+        {
+            en += bodyPartEnergy[body[i]];
+        }
+        return en;
     }
 
     public getCost(size: number = 1): number
@@ -90,6 +98,7 @@ export class Body
 export const BODIES: { readonly [type: string]: Body } = {
     [role.PMINER]: new Body(role.PMINER, 5, 0, bodyTypes.PMINER),
     // TODO: set dynamically depending on source
-    [role.MINER]: new Body(role.MINER, 4, 1, bodyTypes.MINER),
-    [role.UPGRADER]: new Body(role.UPGRADER, 1, 1, bodyTypes.WORKER),
+    [role.MINER]: new Body(role.MINER, 2, 1, bodyTypes.MINER),
+    [role.UPGRADER]: new Body(role.UPGRADER, 1, 2, bodyTypes.WORKER),
+    [role.ECARRIER]: new Body(role.ECARRIER, 1, 3, bodyTypes.CARRIER),  // scale num to num of e's
 };

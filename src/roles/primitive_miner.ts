@@ -5,7 +5,6 @@
  */
 
 import { MinerCreep, task } from "../augmentations/creep"
-// import {CreepMemory} from "../augmentations/creep"
 
 
 /**
@@ -25,29 +24,29 @@ export function run(creep: Creep, r: Room)
         return;
 
     if (!c.memory.task && c.freeCapacity() > 0)
-        c.memory.task = task.MINING;
+        c.task(task.MINING);
 
     if (c.mine())
         return;
 
     if (c.freeCapacity() == 0 && r.getStore()?.store.getFreeCapacity(RESOURCE_ENERGY))
-        c.memory.task = task.STORING;
+        c.task(task.STORING);
     else
-        c.memory.task = task.UPGRADING;
+        c.task(task.UPGRADING);
 
     if (c.putAway())
         return;
 
     if (c.payload() > 0)
-        c.memory.task = task.UPGRADING;
+        c.task(task.UPGRADING);
     else
-        c.memory.task = task.SCAVENGING;
+        c.task(task.SCAVENGING);
 
 
     if (c.upgradeCont())
         return;
 
-    c.memory.task = task.SCAVENGING;
-    c.say("Now going scavenging");
+    c.task(task.SCAVENGING);
+    // c.say("Now going scavenging");
 }
 

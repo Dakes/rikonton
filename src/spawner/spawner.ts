@@ -3,6 +3,7 @@ import {role, task} from "../augmentations/creep"
 // import {Room} from "../augmentations/room"
 // import * as creepAug from "../augmentations/creep"
 import * as myCreepTypes from "../augmentations/creep"
+import { SlowBuffer } from "buffer";
 
 // stats representing one creep type
 interface CreepPopulation
@@ -21,7 +22,7 @@ export function spawnCreeps(room: Room): void
 {
     const spawns: StructureSpawn[] = _.filter(room.myActiveStructures(), (s) =>
         s.structureType == STRUCTURE_SPAWN) as StructureSpawn[];
-    let pop = getPopulation(room.myCreeps());
+    let pop = getPopulation(room.myCreeps(null));
     pop = sortPopulationPriority(pop);
     removeCompleteCreepsFromPop(pop);
     let idx = 0;
@@ -38,10 +39,20 @@ export function spawnCreeps(room: Room): void
 
 function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
 {
-    if (!spawn.room.extensionsFull())
+    // Pminer and Ecarrier are always allowed to spawn.
+    // Everyone else, wait for Extensions to be full
+    if (spawn.spawning)
+        return true;
+    if (!spawn.room.extensionsFull() &&
+        cp?.role != role.PMINER &&
+        cp?.role != role.MINER &&
+        cp?.role != role.ECARRIER)
+        return false;
+    if (spawn.store.getFreeCapacity(RESOURCE_ENERGY) != 0)
         return false;
 
-    switch (cp?.role)
+    console.log("Spawning " + cp.role);
+    switch (cp?.role as string)
     {
         case role.PMINER:
             spawn.spawnCreep(
@@ -73,6 +84,7 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
                     }
                 }
             );
+            break;
         case role.UPGRADER:
             spawn.spawnCreep(
                 BODIES[cp.role].getBody(spawn.room.spawnEnergy()),
@@ -87,6 +99,23 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
                     }
                 }
             );
+            break;
+        case role.ECARRIER as string:
+            spawn.spawnCreep(
+                BODIES[cp.role].getBody(spawn.room.spawnEnergy()),
+                genCreepName(cp.role, spawn),
+                {
+                    memory: <myCreepTypes.EnergyCreepMemory>
+                    {
+                        role: cp.role,
+                        room: spawn.room.name,
+                        task: task.SCAVENGING,
+                        resourceStack: null,
+                    }
+                }
+            );
+            break;
+
 
         default:
             console.log("Got unknown role in spawner.spawnCreep():", cp?.role);
