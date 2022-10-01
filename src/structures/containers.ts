@@ -7,5 +7,6 @@ export function constructContainers(r: Room): boolean
         if (r.createConstructionSite(contPos.pos.x, contPos.pos.y, STRUCTURE_CONTAINER) != OK)
             return false;
     }
+    console.log(`Construct containers in Room: ${r.name}`);
     return true;
 }

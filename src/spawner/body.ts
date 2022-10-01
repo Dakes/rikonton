@@ -64,6 +64,8 @@ export class Body
         let newBody: BodyPartConstant[] = [];
         newBody = this.body[0];
         energy -= this.getEnergyDemand(newBody);
+        if (energy < 0)
+            return [];
 
         const appendEnergy = this.getEnergyDemand(this.body[1]);
         while (energy >= appendEnergy && energy > 0 && appendEnergy > 0)
@@ -99,6 +101,7 @@ export const BODIES: { readonly [type: string]: Body } = {
     [role.PMINER]: new Body(role.PMINER, 5, 0, bodyTypes.PMINER),
     // TODO: set dynamically depending on source
     [role.MINER]: new Body(role.MINER, 2, 1, bodyTypes.MINER),
-    [role.UPGRADER]: new Body(role.UPGRADER, 1, 2, bodyTypes.WORKER),
+    [role.UPGRADER]: new Body(role.UPGRADER, 4, 2, bodyTypes.WORKER),
     [role.ECARRIER]: new Body(role.ECARRIER, 1, 3, bodyTypes.CARRIER),  // scale num to num of e's
+    [role.MCARRIER]: new Body(role.MCARRIER, 2, 3, bodyTypes.CARRIER),
 };

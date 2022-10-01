@@ -37,6 +37,12 @@ export function spawnCreeps(room: Room): void
 
 }
 
+/**
+ * Spawn the miccing creep of this population.
+ * @param spawn Spawn to spawn
+ * @param cp CreepPopulation to fill
+ * @returns true if spawning, false on failure (not enough energy etc.)
+ */
 function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
 {
     // Pminer and Ecarrier are always allowed to spawn.
@@ -46,74 +52,60 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
     if (!spawn.room.extensionsFull() &&
         cp?.role != role.PMINER &&
         cp?.role != role.MINER &&
-        cp?.role != role.ECARRIER)
-        return false;
-    if (spawn.store.getFreeCapacity(RESOURCE_ENERGY) != 0)
+        cp?.role != role.ECARRIER &&
+        cp?.role != role.MCARRIER)
         return false;
 
-    console.log("Spawning " + cp.role);
-    switch (cp?.role as string)
+    let memory: myCreepTypes.EnergyCreepMemory |
+                myCreepTypes.MinerCreepMemory |
+                myCreepTypes.WorkerCreepMemory |
+                null = null;
+
+    switch (cp?.role)
     {
         case role.PMINER:
-            spawn.spawnCreep(
-                BODIES[cp.role].getBody(spawn.room.spawnEnergy()),
-                genCreepName(cp.role, spawn),
-                {
-                    memory: <myCreepTypes.EnergyCreepMemory>
-                    {
+            memory = <myCreepTypes.EnergyCreepMemory> {
                         role: cp.role,
                         room: spawn.room.name,
                         task: task.SCAVENGING,
                         resourceStack: null,
                     }
-                }
-            );
             break;
         case role.MINER:
-            spawn.spawnCreep(
-                BODIES[cp.role].getBody(spawn.room.spawnEnergy()),
-                genCreepName(cp.role, spawn),
-                {
-                    memory: <myCreepTypes.MinerCreepMemory>
-                    {
+            memory = <myCreepTypes.MinerCreepMemory> {
                         role: cp.role,
                         room: spawn.room.name,
                         task: task.MINING,
                         resourceStack: null,
                         sourceId: null,
+                        pos: null,
                     }
-                }
-            );
             break;
         case role.UPGRADER:
-            spawn.spawnCreep(
-                BODIES[cp.role].getBody(spawn.room.spawnEnergy()),
-                genCreepName(cp.role, spawn),
-                {
-                    memory: <myCreepTypes.WorkerCreepMemory>
-                    {
+            memory = <myCreepTypes.WorkerCreepMemory> {
                         role: cp.role,
                         room: spawn.room.name,
                         task: task.SCAVENGING,
                         resourceStack: null,
                     }
-                }
-            );
             break;
-        case role.ECARRIER as string:
-            spawn.spawnCreep(
-                BODIES[cp.role].getBody(spawn.room.spawnEnergy()),
-                genCreepName(cp.role, spawn),
-                {
-                    memory: <myCreepTypes.EnergyCreepMemory>
-                    {
+        case role.ECARRIER:
+            memory = <myCreepTypes.EnergyCreepMemory> {
                         role: cp.role,
                         room: spawn.room.name,
                         task: task.SCAVENGING,
                         resourceStack: null,
                     }
-                }
-            );
+            break;
+        case role.MCARRIER:
+            memory = <myCreepTypes.MinerCreepMemory> {
+                        role: cp.role,
+                        room: spawn.room.name,
+                        task: task.RETRIEVING,
+                        resourceStack: null,
+                        sourceId: null,
+                        pos: null,
+                    }
             break;
 
 
@@ -121,6 +113,26 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
             console.log("Got unknown role in spawner.spawnCreep():", cp?.role);
             break;
     }
+
+    if (memory)
+    {
+        let body: BodyPartConstant[] = BODIES[cp.role].getBody(spawn.room.spawnEnergy());
+        let name: string = genCreepName(cp.role, spawn);
+
+        let success = spawn.spawnCreep(
+            body,
+            name,
+            { memory: memory, }
+        );
+        if (success == OK)
+        {
+            console.log(`${spawn.room.name}: Spawning ${cp.role}`);
+            return true;
+        }
+        else
+            console.log(`${spawn.room.name}: Attemting to spawn ${cp.role}`);
+    }
+
     return false;
 }
 

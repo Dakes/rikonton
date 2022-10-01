@@ -16,7 +16,6 @@ import * as defenders from          "./roles/role.defender"
 import * as constructors from       "./roles/role.constructor"
 import * as miner_carriers from     "./roles/role.miner_carrier"
 import * as carriers from           "./roles/role.carrier"
-import * as extension_carriers from "./roles/role.extension_carrier"
 // import * as primitive_miners from   "./roles/role.primitive_miner"
 // import * as upgrader from           "./roles/role.upgrader"
 // import * as miners from             "./roles/role.miner"
@@ -88,6 +87,9 @@ function manageRoom(room: Room)
             case role.ECARRIER:
                 carrier.runExtensionCarrier(creep, room);
                 break;
+            case role.MCARRIER:
+                carrier.runMinerCarrier(creep, room);
+                break;
         }
     });
 
@@ -98,18 +100,20 @@ function manageRoom(room: Room)
     }
 
 
-    /*
+
+
     // legacy code
     let spawns = room.find(FIND_MY_SPAWNS);
     let spawn = spawns[Game.time%spawns.length];
+    miner_carriers.run(spawn);
+    constructors.run(spawn);
 
+/*
     // miners.run(spawn);
     //defenders.run(spawn);
     // primitive_miners.run(spawn);
 
     miner_carriers.run(spawn);
-    extension_carriers.run(spawn);
-    constructors.run(spawn);
     carriers.run(spawn);
     // upgrader.run(spawn);
 
@@ -118,7 +122,7 @@ function manageRoom(room: Room)
     structures.run(spawn);
     extensions.run(spawn);
     // legacy code END
-    */
+*/
 
     try
     {
@@ -157,7 +161,7 @@ function genPixel()
 {
     try
     {
-        if(Game.cpu.bucket > 9000)
+        if(Game.cpu.bucket > 9500)
             Game.cpu.generatePixel();
     }
     catch(err){}

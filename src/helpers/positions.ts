@@ -13,11 +13,11 @@ export function positionSquare(pos:RoomPosition, radius:number=1, fill:boolean=f
 {
     let result_pos: RoomPosition[] = [];
 
-    for (let x=-radius; x<radius; x++)
+    for (let x=-radius; x<=radius; x++)
     {
-        for (let y=-radius; y<radius; y++)
+        for (let y=-radius; y<=radius; y++)
         {
-            if (!fill && (Math.abs(x) != radius || Math.abs(y) != radius ))
+            if (!fill && Math.abs(x) != radius && Math.abs(y) != radius )
                 continue;
             result_pos.push(new RoomPosition(pos.x + x, pos.y + y, pos.roomName));
         }

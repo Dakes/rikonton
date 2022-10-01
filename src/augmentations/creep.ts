@@ -1,7 +1,4 @@
-import exp from "constants";
 import { positionSquare } from "helpers/positions";
-import { InvalidatedProjectKind } from "typescript";
-import { isNullOrUndefined } from "util";
 
 export {};
 // import {role} from "."
@@ -117,17 +114,41 @@ export class EnergyCreep extends MyCreep
         return this.store.getFreeCapacity(resource);
     }
 
+    usedCapacity(resource:ResourceConstant|null=null)
+    {
+        if (resource == null)
+            return this.store.getCapacity() - this.store.getFreeCapacity();
+        else
+            return this.store.getUsedCapacity(resource);
+    }
+
     /**
+     * @deprecated
      * @param resource. If null: combined capacity. If ResourceConstant, just of that type.
      * @returns payload number.
      */
     payload(resource: ResourceConstant | null = null)
     {
-        if (resource == null)
-            return this.store.getCapacity() - this.store.getFreeCapacity() || 0;
-        else
-            return this.store[resource];
+        return this.usedCapacity(resource);
     }
+
+    /**
+     * Check, if creep has space in its store
+     * @returns boolean
+     */
+    hasSpace(): boolean
+    {
+        return this.freeCapacity() > 0;
+    }
+
+    /**
+     * Check if a creeps store is empty
+     */
+    isEmty(): boolean
+    {
+        return this.store.getUsedCapacity() == 0;
+    }
+
 
     totalCapacity()
     {
@@ -225,17 +246,17 @@ export class EnergyCreep extends MyCreep
         {
             if (store.store.getUsedCapacity(resource) == 0)
                 return true;
-            if (store.structureType == STRUCTURE_SPAWN &&
-                // @ts-ignore
-                store.store.getUsedCapacity(resource) < 300)
-                return true;
+            // if (store.structureType == STRUCTURE_SPAWN &&
+            //     // @ts-ignore
+            //     store.store.getUsedCapacity(resource) < 250)
+            //     return true;
             if (store && this.withdraw(store, resource) == ERR_NOT_IN_RANGE)
             {
                 this.moveTo(store);
                 return true;
             }
         }
-        if (this.payload(resource) == this.store.getCapacity(resource))
+        if (this.payload() == this.store.getCapacity(resource))
             this.memory.task = task.NONE;
         return false;
     }
@@ -367,6 +388,7 @@ export class WorkerCreep extends EnergyCreep
 export interface MinerCreepMemory extends WorkerCreepMemory
 {
     sourceId?: Id<Source> | null;
+    pos?: RoomPosition | null;
 }
 
 
@@ -374,13 +396,10 @@ export class MinerCreep extends WorkerCreep
 {
     // @ts-ignore
     memory: MinerCreepMemory;
-    // cached position for miner to walk to
-    _minerPos: RoomPosition | null;
 
     constructor(id: Id<Creep>)
     {
         super(id);
-        this._minerPos = null;
         //this.memory = memory;
     }
 
@@ -462,20 +481,38 @@ export class MinerCreep extends WorkerCreep
      */
     moveToMiningPos(): boolean
     {
-        if (!this._minerPos)
+        this.setContainerPos(this.memory.sourceId);
+        if (this.memory.pos != null &&
+            this.pos.x != this.memory.pos.x &&
+            this.pos.y != this.memory.pos.y)
+        {
+            this.moveTo(this.memory.pos.x, this.memory.pos.y);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Set por in creep memory of container which it will serve
+     * @param parentId Id of parent structure. eg. Source of Miner Container
+     * @returns true if set. False is unset.
+     */
+    setContainerPos(parentId: Id<Structure>|Id<Source>|null|undefined)
+    {
+        if (!this.memory.pos && parentId)
         {
             for(let i in this.room.memory.ContainerPos)
             {
                 const contPos = this.room.memory.ContainerPos[i];
-                if (contPos.id == this.memory.sourceId)
-                    this._minerPos = contPos.pos;
+                if (contPos.id == parentId)
+                {
+                    this.memory.pos = contPos.pos;
+                    return true;
+                }
             }
         }
-        if (this._minerPos != null &&  this.pos.x != this._minerPos.x && this.pos.y != this._minerPos.y)
-        {
-            this.moveTo(this._minerPos.x, this._minerPos.y);
+        if (this.memory.pos)
             return true;
-        }
         return false;
     }
 

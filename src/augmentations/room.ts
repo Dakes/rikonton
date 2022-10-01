@@ -51,15 +51,14 @@ declare global
 
 Room.prototype.initRoomMemory = function ()
 {
-    try
+    if (this.memory.ContainerPos === undefined)
     {
-        this.memory.ContainerPos;
-    }
-    catch (ex)
-    {
+        console.log(`Initializing ${this.name}.memory.ContainerPos`);
         this.memory.ContainerPos = [];
-        this.calcContainerPos();
     }
+
+    if (this.memory.ContainerPos.length == 0)
+        this.calcContainerPos();
 }
 
 
@@ -67,7 +66,7 @@ Room.prototype.calcContainerPos = function ()
 {
     if (!this.memory.ContainerPos.length)
     {
-        console.log("Setting Container Positions");
+        console.log(`${this.name}: Calculating Container Positions`);
         const room_terrain = Game.map.getRoomTerrain(this.name);
         const sources = this.find(FIND_SOURCES);
 
@@ -79,6 +78,7 @@ Room.prototype.calcContainerPos = function ()
             for (let i in source_positions_around)
             {
                 let containerPos = source_positions_around[i];
+                console.log(containerPos);
                 // 0 = plain, 1 = wall, 2 = swamp
                 let terrain = room_terrain.get(containerPos.x, containerPos.y);
                 if (terrain != TERRAIN_MASK_WALL)
@@ -108,11 +108,15 @@ Room.prototype.getStore = function ()
     if (storage)
         return storage;
     let spawns: StructureSpawn[] = this.mySpawns();
+    if (spawns.length >= 1)
+        return spawns[0];
+    /*
     for (let i in spawns)
     {
         if (spawns[i].store.getFreeCapacity(RESOURCE_ENERGY) > 0)
             return spawns[i]
     }
+    */
     // TODO: add intermediate container next to spawn, until storage is built
     return null;
 };
