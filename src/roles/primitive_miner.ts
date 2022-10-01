@@ -31,22 +31,28 @@ export function run(creep: Creep, r: Room)
 
     if (c.freeCapacity() == 0 && r.getStore()?.store.getFreeCapacity(RESOURCE_ENERGY))
         c.task(task.STORING);
-    else
-        c.task(task.UPGRADING);
 
     if (c.putAway())
         return;
 
-    if (c.payload() > 0)
-        c.task(task.UPGRADING);
+    if (c.usedCapacity() > 0)
+    {
+        let roomStore = r.getStore();
+        if (roomStore && roomStore.structureType == STRUCTURE_SPAWN &&
+            roomStore.store.getUsedCapacity(RESOURCE_ENERGY) < 300)
+            c.task(task.STORING);
+        else
+            c.task(task.UPGRADING);
+    }
     else
         c.task(task.SCAVENGING);
+
 
 
     if (c.upgradeCont())
         return;
 
-    c.task(task.SCAVENGING);
-    // c.say("Now going scavenging");
+    if (c.usedCapacity() == 0)
+        c.task(task.SCAVENGING);
 }
 

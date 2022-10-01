@@ -8,6 +8,7 @@ export function run(creep: Creep, r: Room)
     c.setRoleSource(role.MINER);
     if (c.moveToMiningPos())
         return;
+
     c.mine();
 }
 

@@ -22,9 +22,14 @@ export function spawnCreeps(room: Room): void
 {
     const spawns: StructureSpawn[] = _.filter(room.myActiveStructures(), (s) =>
         s.structureType == STRUCTURE_SPAWN) as StructureSpawn[];
-    let pop = getPopulation(room.myCreeps(null));
+    let pop: Population = getPopulation(room.myCreeps(null));
     pop = sortPopulationPriority(pop);
     removeCompleteCreepsFromPop(pop);
+
+    // complete, no missing creeps
+    if (pop.population.length == 0)
+        return;
+
     let idx = 0;
     while (idx < spawns.length && !spawns[idx].spawning)
     {
@@ -111,7 +116,7 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
 
         default:
             console.log("Got unknown role in spawner.spawnCreep():", cp?.role);
-            break;
+            return false;
     }
 
     if (memory)

@@ -14,11 +14,7 @@ import { constructContainers } from "structures/containers";
 // legacy imports
 import * as defenders from          "./roles/role.defender"
 import * as constructors from       "./roles/role.constructor"
-import * as miner_carriers from     "./roles/role.miner_carrier"
 import * as carriers from           "./roles/role.carrier"
-// import * as primitive_miners from   "./roles/role.primitive_miner"
-// import * as upgrader from           "./roles/role.upgrader"
-// import * as miners from             "./roles/role.miner"
 import * as roads from              "./roles/road"
 import * as towers from             "./roles/tower"
 import * as extensions from         "./roles/extension"
@@ -100,12 +96,9 @@ function manageRoom(room: Room)
     }
 
 
-
-
     // legacy code
     let spawns = room.find(FIND_MY_SPAWNS);
     let spawn = spawns[Game.time%spawns.length];
-    miner_carriers.run(spawn);
     constructors.run(spawn);
 
 /*

@@ -97,15 +97,15 @@ export class EnergyCreep extends MyCreep
     {
         if (this.memory.task != task.STORING)
             return false;
-        let store = Game.rooms[this.memory.room].getStore();
+        let centralStore = Game.rooms[this.memory.room].getStore();
 
-        if (this.store.getUsedCapacity() == 0 || store?.store.getFreeCapacity(resource) == 0)
+        if (this.isEmty() || centralStore?.store.getFreeCapacity(resource) == 0)
         {
             this.memory.task = task.NONE;
             return false;
         }
-        if (store && this.transfer(store, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE)
-            this.moveTo(store);
+        if (centralStore && this.transfer(centralStore, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE)
+            this.moveTo(centralStore);
         return true;
     }
 
@@ -147,6 +147,11 @@ export class EnergyCreep extends MyCreep
     isEmty(): boolean
     {
         return this.store.getUsedCapacity() == 0;
+    }
+
+    isFull(): boolean
+    {
+        return !this.hasSpace();
     }
 
 
@@ -241,7 +246,7 @@ export class EnergyCreep extends MyCreep
     {
         if (this.memory.task != task.RETRIEVING)
             return false;
-        let store = this.room.getStore();
+        let store = this.room.getStore(false);
         if (store)
         {
             if (store.store.getUsedCapacity(resource) == 0)
@@ -256,7 +261,7 @@ export class EnergyCreep extends MyCreep
                 return true;
             }
         }
-        if (this.payload() == this.store.getCapacity(resource))
+        if (this.isFull())
             this.memory.task = task.NONE;
         return false;
     }
@@ -426,7 +431,7 @@ export class MinerCreep extends WorkerCreep
             return true;
 
         // TODO: make compatible with other creep types
-        let miners: MinerCreep[] = this.room.myCreeps(role.MINER) as MinerCreep[];
+        let filteredCreeps: MinerCreep[] = this.room.myCreeps(r) as MinerCreep[];
         const sources = this.room.find(FIND_SOURCES);
 
         for (let i in sources)
@@ -434,9 +439,9 @@ export class MinerCreep extends WorkerCreep
             let sid: Id<Source> = sources[i].id;
             let snum = num;
             // check if id is used by other miners
-            for (let m in miners)
+            for (let m in filteredCreeps)
             {
-                if (miners[m].memory.sourceId == sid)
+                if (filteredCreeps[m].memory.sourceId == sid)
                 {
                     snum--;
                 }
@@ -483,8 +488,8 @@ export class MinerCreep extends WorkerCreep
     {
         this.setContainerPos(this.memory.sourceId);
         if (this.memory.pos != null &&
-            this.pos.x != this.memory.pos.x &&
-            this.pos.y != this.memory.pos.y)
+            (this.pos.x != this.memory.pos.x ||
+            this.pos.y != this.memory.pos.y))
         {
             this.moveTo(this.memory.pos.x, this.memory.pos.y);
             return true;
@@ -504,7 +509,7 @@ export class MinerCreep extends WorkerCreep
             for(let i in this.room.memory.ContainerPos)
             {
                 const contPos = this.room.memory.ContainerPos[i];
-                if (contPos.id == parentId)
+                if (contPos.parentId == parentId)
                 {
                     this.memory.pos = contPos.pos;
                     return true;

@@ -5,17 +5,32 @@ import { positionSquare } from "helpers/positions";
 
 export { }
 //import {Room} from "."
+
+// Where to place central container compared to Spawn Nr.1
+const CONT_OFFSET_X = -2;
+const CONT_OFFSET_Y = 2;
+
+const STORAGE_OFFSET_X = -1;
+const STORAGE_OFFSET_Y = 0;
+
+
 declare global
 {
+
     interface Room
     {
         memory: RoomMemory;
         readonly prototype: Room;
-        getStore(): StructureSpawn | StructureContainer | StructureStorage | null;
+        getStore(store?:boolean): StructureSpawn | StructureContainer | StructureStorage | null;
+        getSpawnPos(): RoomPosition;
+        getCentralContPos(): RoomPosition;
+        getCentralCont(): StructureContainer | null;
         myActiveStructures(struct?: StructureConstant|null): Structure[];
         _myActiveStructures?: Structure[];
         myStructures(struct?: StructureConstant|null): Structure[];
         _myStructures?: Structure[];
+        allStructures(struct?: StructureConstant|null): Structure[];
+        _allStructures?: Structure[];
 
         myExtensions(): StructureExtension[]; // technically not needed any more
         _myExtensions?: StructureExtension[]; // technically not needed any more
@@ -38,7 +53,7 @@ declare global
     export interface ContainerPosition
     {
         "id": Id<StructureContainer> | null,  // Id of this Container
-        "parentId": Id<Structure>,  // Structure this container belongs to
+        "parentId": Id<Structure> | Id<Source>,  // Structure this container belongs to
         "use": string,  // Use case
         "pos": RoomPosition,  // Position where container should be
     }
@@ -51,6 +66,7 @@ declare global
 
 Room.prototype.initRoomMemory = function ()
 {
+    // TODO: write first spawn coords to memory
     if (this.memory.ContainerPos === undefined)
     {
         console.log(`Initializing ${this.name}.memory.ContainerPos`);
@@ -70,6 +86,7 @@ Room.prototype.calcContainerPos = function ()
         const room_terrain = Game.map.getRoomTerrain(this.name);
         const sources = this.find(FIND_SOURCES);
 
+        // Source containers
         for (let i in sources)
         {
             let source = sources[i];
@@ -78,7 +95,6 @@ Room.prototype.calcContainerPos = function ()
             for (let i in source_positions_around)
             {
                 let containerPos = source_positions_around[i];
-                console.log(containerPos);
                 // 0 = plain, 1 = wall, 2 = swamp
                 let terrain = room_terrain.get(containerPos.x, containerPos.y);
                 if (terrain != TERRAIN_MASK_WALL)
@@ -86,7 +102,7 @@ Room.prototype.calcContainerPos = function ()
                     this.memory.ContainerPos.push(
                         {
                             "id": null,
-                            "parentId": source.id as unknown as Id<Structure>,
+                            "parentId": source.id as unknown as Id<Source>,
                             "use": "Miner Store",
                             "pos": containerPos,
                         }
@@ -95,29 +111,82 @@ Room.prototype.calcContainerPos = function ()
                 }
             }
         }
+
+        // center container
+        // TODO: get spawn position algorithmically
+        let spawn = this.mySpawns()[0];
+        let x = spawn.pos.x;
+        let y = spawn.pos.y;
+        x += CONT_OFFSET_X;
+        y += CONT_OFFSET_Y;
+        this.memory.ContainerPos.push(
+            {
+                "id": null,
+                "parentId": spawn.id as Id<Structure>,
+                "use": "Central Store",
+                "pos": new RoomPosition(x, y, this.name),
+            }
+        );
+
     }
     return true;
 }
 
+Room.prototype.getSpawnPos = function ()
+{
+    let spawn = this.mySpawns()[0];
+    return spawn.pos;
+}
+
+Room.prototype.getCentralContPos = function ()
+{
+    let spawnPos = this.getSpawnPos();
+    return new RoomPosition(spawnPos.x+CONT_OFFSET_X, spawnPos.y+CONT_OFFSET_Y, this.name);
+}
+
+// TODO: cache
+Room.prototype.getCentralCont = function ()
+{
+    let containers: StructureContainer[] = this.allStructures(STRUCTURE_CONTAINER) as StructureContainer[];
+    let centralContPos: RoomPosition = this.getCentralContPos();
+    let contPos: ContainerPosition = this.memory.ContainerPos.filter((c) =>
+        c.pos.x == centralContPos.x && c.pos.y == centralContPos.y)[0];
+    for (let i in containers)
+    {
+        let cont = containers[i];
+        if (cont.pos.x == contPos.pos.x && cont.pos.y == contPos.pos.y)
+        {
+            return cont;
+        }
+    }
+    return null;
+}
+
 /**
  * Get the main storage of the room.
+ * @param store: true: get store for storing. false: get store for retrieving. Default: true
  */
-Room.prototype.getStore = function ()
+Room.prototype.getStore = function (store:boolean=true)
 {
     let storage = this.storage;
     if (storage)
         return storage;
-    let spawns: StructureSpawn[] = this.mySpawns();
-    if (spawns.length >= 1)
-        return spawns[0];
-    /*
-    for (let i in spawns)
-    {
-        if (spawns[i].store.getFreeCapacity(RESOURCE_ENERGY) > 0)
-            return spawns[i]
-    }
-    */
-    // TODO: add intermediate container next to spawn, until storage is built
+
+    let spawn: StructureSpawn = this.mySpawns()[0];
+
+    let cont = this.getCentralCont();
+    if (store && (!cont || spawn?.store.getFreeCapacity(RESOURCE_ENERGY) > 0))
+        return spawn;
+    else if (store && cont && spawn?.store.getFreeCapacity(RESOURCE_ENERGY) == 0)
+        return cont;
+
+    if (!store && cont?.store.getUsedCapacity(RESOURCE_ENERGY) != 0)
+        return cont;
+    if (!store && spawn?.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
+        return spawn;
+
+    if (spawn)
+        return spawn;
     return null;
 };
 
@@ -207,6 +276,20 @@ Room.prototype.myStructures = function (struct:StructureConstant|null=null)
     }
     const result = this.find(FIND_MY_STRUCTURES);
     this._myStructures = result;
+    return this.myStructures(struct);
+}
+
+Room.prototype.allStructures = function (struct:StructureConstant|null=null)
+{
+    if (this._allStructures !== undefined)
+    {
+        if (struct != null)
+            return _.filter(this._allStructures, (s: Structure) =>
+                s.structureType == struct) as Structure[];
+        return this._allStructures;
+    }
+    const result = this.find(FIND_STRUCTURES);
+    this._allStructures = result;
     return this.myStructures(struct);
 }
 
