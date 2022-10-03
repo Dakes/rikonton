@@ -1,30 +1,19 @@
-import {BODIES} from "./body"
-import {role, task} from "../augmentations/creep"
+import {Role, task} from "../augmentations/creep"
 // import {Room} from "../augmentations/room"
 // import * as creepAug from "../augmentations/creep"
 import * as myCreepTypes from "../augmentations/creep"
 import { SlowBuffer } from "buffer";
-
-// stats representing one creep type
-interface CreepPopulation
-{
-    role: string;
-    live: number;  // creeps of this type that are alive
-}
-
-interface Population
-{
-    population: CreepPopulation[];
-    total: number;
-}
+import { BODIES, CreepPopulation, Population, updateCreepNumber } from "./population";
 
 export function spawnCreeps(room: Room): void
 {
     const spawns: StructureSpawn[] = _.filter(room.myActiveStructures(), (s) =>
         s.structureType == STRUCTURE_SPAWN) as StructureSpawn[];
+
+
     let pop: Population = getPopulation(room.myCreeps(null));
     pop = sortPopulationPriority(pop);
-    removeCompleteCreepsFromPop(pop);
+    removeCompleteCreepsFromPop(room, pop);
 
     // complete, no missing creeps
     if (pop.population.length == 0)
@@ -55,10 +44,16 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
     if (spawn.spawning)
         return true;
     if (!spawn.room.extensionsFull() &&
-        cp?.role != role.PMINER &&
-        cp?.role != role.MINER &&
-        cp?.role != role.ECARRIER &&
-        cp?.role != role.MCARRIER)
+        cp?.role != Role.PMINER &&
+        cp?.role != Role.MINER &&
+        cp?.role != Role.ECARRIER &&
+        cp?.role != Role.MCARRIER)
+        return false;
+    if (spawn.room.spawnEnergy() < 250)
+        return false;
+
+    // check if creep count is up to date and update for next try. TODO: fix (memory)
+    if (spawn.room.memory.populationNumber[cp.role] != updateCreepNumber(spawn.room, cp.role))
         return false;
 
     let memory: myCreepTypes.EnergyCreepMemory |
@@ -68,7 +63,7 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
 
     switch (cp?.role)
     {
-        case role.PMINER:
+        case Role.PMINER:
             memory = <myCreepTypes.EnergyCreepMemory> {
                         role: cp.role,
                         room: spawn.room.name,
@@ -76,7 +71,7 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
                         resourceStack: null,
                     }
             break;
-        case role.MINER:
+        case Role.MINER:
             memory = <myCreepTypes.MinerCreepMemory> {
                         role: cp.role,
                         room: spawn.room.name,
@@ -86,7 +81,7 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
                         pos: null,
                     }
             break;
-        case role.UPGRADER:
+        case Role.UPGRADER:
             memory = <myCreepTypes.WorkerCreepMemory> {
                         role: cp.role,
                         room: spawn.room.name,
@@ -94,7 +89,7 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
                         resourceStack: null,
                     }
             break;
-        case role.ECARRIER:
+        case Role.ECARRIER:
             memory = <myCreepTypes.EnergyCreepMemory> {
                         role: cp.role,
                         room: spawn.room.name,
@@ -102,7 +97,7 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
                         resourceStack: null,
                     }
             break;
-        case role.MCARRIER:
+        case Role.MCARRIER:
             memory = <myCreepTypes.MinerCreepMemory> {
                         role: cp.role,
                         room: spawn.room.name,
@@ -135,7 +130,14 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
             return true;
         }
         else
-            console.log(`${spawn.room.name}: Attemting to spawn ${cp.role}`);
+        {
+            console.log(`${spawn.room.name}: Attemting to spawn ${cp.role}. Error Code: ${success}`);
+            console.log("body: ", body);
+            console.log("memory: ", memory);
+            console.log("name: ", name);
+            console.log("body[0]: ", body[0]);
+            return false;
+        }
     }
 
     return false;
@@ -148,12 +150,12 @@ function genCreepName(r:string, spawn: StructureSpawn)
 }
 
 
-function removeCompleteCreepsFromPop(pop: Population): Population
+function removeCompleteCreepsFromPop(room: Room, pop: Population): Population
 {
     _.remove(pop.population, function(cp: CreepPopulation) {
         if (BODIES[cp.role] == undefined)
             return true;
-        return cp.live >= BODIES[cp.role].num;
+        return cp.live >= room.memory.populationNumber[cp.role];
     });
     // TODO: update total (currently unused)
     return pop;
@@ -173,7 +175,7 @@ function sortPopulationPriority(pop: Population): Population
 
 function getPopulation(creeps: Creep[]): Population
 {
-    const roleValues = Object.values(myCreepTypes.role);
+    const roleValues = Object.values(myCreepTypes.Role);
     let cpa: CreepPopulation[] = [];
     let total = 0;
     roleValues.forEach((rol, idx) => {

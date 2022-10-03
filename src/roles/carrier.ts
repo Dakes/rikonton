@@ -3,8 +3,9 @@
  * Carrier, ExtensionCarrier and Miner Carrier
  */
 
+import { updateCreepNumber } from "spawner/population";
 import { isReturnStatement } from "typescript";
-import { EnergyCreep, MinerCreep, role, task } from "../augmentations/creep"
+import { EnergyCreep, MinerCreep, Role, task } from "../augmentations/creep"
 
 /**
  * *-> scavenging -> retrieve -> fill Ext -> *
@@ -42,8 +43,10 @@ export function runExtensionCarrier(creep: Creep, r: Room)
     if (c.fillExtension())
         return;
 
-    if (c.freeCapacity() < 50)
+    if (c.freeCapacity() < 50 && r.getStore()?.store.getUsedCapacity(RESOURCE_ENERGY) == 0)
         c.task(task.SCAVENGING);
+    else if (c.freeCapacity() < 50)
+        c.task(task.RETRIEVING);
 }
 
 /**
@@ -56,7 +59,7 @@ export function runExtensionCarrier(creep: Creep, r: Room)
 export function runMinerCarrier(creep: Creep, r: Room)
 {
     let c: MinerCreep = new MinerCreep(creep.id);
-    c.setRoleSource(role.MCARRIER, 1); // <-- TODO: Scale with number of creeps
+    c.setRoleSource(Role.MCARRIER, Math.round(updateCreepNumber(r, c.memory.role)/2)); // <-- TODO: Scale with number of creeps
     if (!c.memory.sourceId)
         return;
 
@@ -68,18 +71,20 @@ export function runMinerCarrier(creep: Creep, r: Room)
     if (c.scavenge())
         return;
 
-    if (c.memory.task == task.NONE && c.hasSpace())
+    if (c.memory.task == task.NONE && c.isEmty())
         c.task(task.RETRIEVING);
+    else if (c.memory.task == task.NONE && c.usedCapacity())
+        c.task(task.STORING);
 
 
-    if (c.memory.task == task.RETRIEVING)
+    if (c.memory.task == task.RETRIEVING && c.memory.pos)
     {
-        // @ts-ignore
-        const cont: StructureContainer | undefined = r.lookAt(c.memory.pos).filter(
-            (c) => c.type === LOOK_STRUCTURES)[0];
+        const contFind: Structure | undefined = r.lookAt(c.memory.pos.x, c.memory.pos.y).filter(
+            (c) => c.type === LOOK_STRUCTURES)[0]?.structure;
 
-        if (cont)
+        if (contFind)
         {
+            const cont: StructureContainer = contFind as StructureContainer;
             if (c.withdraw(cont, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE)
             {
                 c.moveTo(cont);
@@ -110,6 +115,6 @@ export function runMinerCarrier(creep: Creep, r: Room)
 
 
     if (c.isEmty())
-        c.task(task.SCAVENGING);
+        c.task(task.NONE);
 
 }

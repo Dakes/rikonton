@@ -3,7 +3,7 @@ import { positionSquare } from "helpers/positions";
 export {};
 // import {role} from "."
 
-export enum role
+export enum Role
 {
     PMINER      = 'Primitive_Miner',
     MINER       = 'Miner',
@@ -30,21 +30,21 @@ export enum task
 
 
 const taskToStr: { [key in task]: string} = {
-    [task.NONE]: "虚",
-    [task.STORING]: "入庫に行きます",
-    [task.RETRIEVING]: "引出す",
-    [task.SCAVENGING]: "ゴミ漁りに行きます",
-    [task.FILLING]: "いっぱいにする",
-    [task.MINING]: "採掘に行きます",
-    [task.UPGRADING]: "アップグレードする",
+    [task.NONE]:         "虚",
+    [task.STORING]:      "入庫に行きます",
+    [task.RETRIEVING]:   "引出す",
+    [task.SCAVENGING]:   "ゴミ漁りに行きます",
+    [task.FILLING]:      "いっぱいにする",
+    [task.MINING]:       "採掘に行きます",
+    [task.UPGRADING]:    "アップグレードする",
     [task.CONSTRUCTING]: "工事する",
-    [task.REPAIRING]: "直す",
+    [task.REPAIRING]:    "直す",
 };
 
 declare global {
     export interface CreepMemory
     {
-        role: role;
+        role: Role;
         // Home room
         room: string;
         task: task;  // current task creep is working on
@@ -425,7 +425,7 @@ export class MinerCreep extends WorkerCreep
      * Set a source per role. Only a set amount of creeps serve one source.
      * @returns true, if set. false on error, if not set.
      */
-    setRoleSource(r: role, num: number=1): boolean
+    setRoleSource(r: Role, num: number=1): boolean
     {
         if (this.memory.sourceId)
             return true;

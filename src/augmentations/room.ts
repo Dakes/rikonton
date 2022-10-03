@@ -1,7 +1,8 @@
 import { Position } from "source-map";
 import { VariableDeclaration } from "typescript";
-import { role } from "./creep";
+import { Role } from "./creep";
 import { positionSquare } from "helpers/positions";
+import { populationPermit } from "spawner/population";
 
 export { }
 //import {Room} from "."
@@ -22,9 +23,10 @@ declare global
         memory: RoomMemory;
         readonly prototype: Room;
         getStore(store?:boolean): StructureSpawn | StructureContainer | StructureStorage | null;
-        getSpawnPos(): RoomPosition;
+        getSpawnPos(num?:number): RoomPosition;
         getCentralContPos(): RoomPosition;
         getCentralCont(): StructureContainer | null;
+        getStoragePos(): RoomPosition;
         myActiveStructures(struct?: StructureConstant|null): Structure[];
         _myActiveStructures?: Structure[];
         myStructures(struct?: StructureConstant|null): Structure[];
@@ -37,13 +39,14 @@ declare global
         mySpawns(): StructureSpawn[];         // technically not needed any more
         _mySpawns?: StructureSpawn[];         // technically not needed any more
 
-        myCreeps(r: role | null): Creep[];
+        myCreeps(r?: Role | null): Creep[];
         _myCreeps?: Creep[];
         extensionsFull(): boolean;
         _extensionsFull?: boolean;
         spawnEnergy(): number;
         maxSpawnEnergy(): number;
         _maxSpawnEnergy?: number;
+        droppedResources(): number;
 
         // memory management
         initRoomMemory(): any;
@@ -60,6 +63,7 @@ declare global
     export interface RoomMemory extends Memory
     {
         ContainerPos: ContainerPosition[];
+        populationNumber: typeof populationPermit;
         // roads;
     }
 }
@@ -75,6 +79,8 @@ Room.prototype.initRoomMemory = function ()
 
     if (this.memory.ContainerPos.length == 0)
         this.calcContainerPos();
+
+    this.memory.populationNumber = populationPermit;
 }
 
 
@@ -132,9 +138,11 @@ Room.prototype.calcContainerPos = function ()
     return true;
 }
 
-Room.prototype.getSpawnPos = function ()
+Room.prototype.getSpawnPos = function (num:number|undefined=0)
 {
-    let spawn = this.mySpawns()[0];
+    if (num == undefined)
+        num = 0;
+    let spawn = this.mySpawns()[num];
     return spawn.pos;
 }
 
@@ -160,6 +168,12 @@ Room.prototype.getCentralCont = function ()
         }
     }
     return null;
+}
+
+Room.prototype.getStoragePos = function ()
+{
+    let sp = this.getSpawnPos(0);
+    return new RoomPosition(sp.x+STORAGE_OFFSET_X, sp.y+STORAGE_OFFSET_Y, this.name);
 }
 
 /**
@@ -293,7 +307,7 @@ Room.prototype.allStructures = function (struct:StructureConstant|null=null)
     return this.myStructures(struct);
 }
 
-Room.prototype.myCreeps = function (r:(role|null)=null)
+Room.prototype.myCreeps = function (r:(Role|null)=null)
 {
     if (this._myCreeps === undefined)
     {
@@ -307,6 +321,15 @@ Room.prototype.myCreeps = function (r:(role|null)=null)
 }
 
 
+Room.prototype.droppedResources = function ()
+{
+    let res = 0;
+    let dropped = this.find(FIND_DROPPED_RESOURCES);
+    for (let i in dropped)
+        res += dropped[i].amount;
+
+    return res;
+}
 
 /*
 Object.defineProperties(Room.prototype, {

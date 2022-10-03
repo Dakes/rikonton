@@ -1,4 +1,4 @@
-import {role} from "./augmentations/creep"
+import {Role} from "./augmentations/creep"
 import { ErrorMapper } from "./utils/ErrorMapper";
 // import { Game } from "../test/unit/mock";
 import { spawnCreeps } from "./spawner";
@@ -9,7 +9,7 @@ import * as carrier from "./roles/carrier"
 import * as room from "./augmentations/room"
 import './augmentations';
 
-import { constructContainers } from "structures/containers";
+import { constructContainers, constructStorage } from "structures/store";
 
 // legacy imports
 import * as defenders from          "./roles/role.defender"
@@ -40,7 +40,7 @@ declare global
     }
 }
 
-_.forEach(Game.rooms, (r: Room) => {r.initRoomMemory()});
+_.forEach(Game.rooms, (r: Room) => {r.initRoomMemory();});
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
@@ -69,30 +69,41 @@ function manageRoom(room: Room)
     }
 
     _.forEach(room.find(FIND_MY_CREEPS), (creep: Creep) => {
-        switch (creep.memory.role)
-        {
-            case role.PMINER:
-                pMiner.run(creep, room);
-                break;
-            case role.MINER:
-                miner.run(creep, room);
-                break;
-            case role.UPGRADER:
-                upgrader.run(creep, room);
-                break;
-            case role.ECARRIER:
-                carrier.runExtensionCarrier(creep, room);
-                break;
-            case role.MCARRIER:
-                carrier.runMinerCarrier(creep, room);
-                break;
+        try {
+            switch (creep.memory.role)
+            {
+                case Role.PMINER:
+                    pMiner.run(creep, room);
+                    break;
+                case Role.MINER:
+                    miner.run(creep, room);
+                    break;
+                case Role.UPGRADER:
+                    upgrader.run(creep, room);
+                    break;
+                case Role.ECARRIER:
+                    carrier.runExtensionCarrier(creep, room);
+                    break;
+                case Role.MCARRIER:
+                    carrier.runMinerCarrier(creep, room);
+                    break;
+            }
         }
+        catch (ex)
+        {
+            console.log(`Error in ${creep.memory.role} execution: `, ex);
+        }
+
     });
 
     // Build structures
-    if (Game.time % 1000 == 0)
+    if (Game.time % 1002 == 0)
     {
         constructContainers(room);
+    }
+    if (Game.time % 10016 == 0)
+    {
+        constructStorage(room);
     }
 
 

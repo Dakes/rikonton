@@ -1,4 +1,4 @@
-import {role} from "../augmentations/creep"
+import {Role as Role} from "../augmentations/creep"
 import * as creepy from "../augmentations/creep"
 
 
@@ -14,7 +14,7 @@ enum BodyTypeName
     CLAIMER="CLAIMER"  ,
 }
 
-const bodyTypes: {[key in BodyTypeName]: [BodyPartConstant[], BodyPartConstant[]]} = {
+export const bodyTypes: {[key in BodyTypeName]: [BodyPartConstant[], BodyPartConstant[]]} = {
     [BodyTypeName.MINER]   : [[MOVE, WORK, WORK], [WORK]],
     [BodyTypeName.PMINER]  : [[MOVE, WORK, CARRY, CARRY, CARRY], []],
     [BodyTypeName.CARRIER] : [[MOVE, CARRY, CARRY, CARRY, CARRY, CARRY], [MOVE, CARRY]],
@@ -40,8 +40,6 @@ export class Body
 
     constructor(
         public readonly role: string,
-        // how many creeps are allowed
-        public readonly num: number,
         // priority/order in which to spawn: lower=higher
         public readonly priority: number,
         // Base parts, that creep has to have
@@ -50,15 +48,14 @@ export class Body
         // public readonly bodyAdd: BodyPartConstant[],
     )
     {
-
     }
+
 
     public toString()
     {
         return `${this.role}(${this.body})`;
     }
 
-    // TODO: redo (availableEnergy)
     public getBody(energy: number): BodyPartConstant[]
     {
         let newBody: BodyPartConstant[] = [];
@@ -79,6 +76,11 @@ export class Body
         return newBody;
     }
 
+    public getSpawnableBody(baseBody: BodyPartConstant, extBody: BodyPartConstant, energy: number)
+    {
+
+    }
+
     getEnergyDemand(body: BodyPartConstant[]): number
     {
         let en: number = 0;
@@ -97,11 +99,4 @@ export class Body
 }
 
 
-export const BODIES: { readonly [type: string]: Body } = {
-    [role.PMINER]: new Body(role.PMINER, 5, 0, bodyTypes.PMINER),
-    // TODO: set dynamically depending on source
-    [role.MINER]: new Body(role.MINER, 2, 1, bodyTypes.MINER),
-    [role.UPGRADER]: new Body(role.UPGRADER, 2, 2, bodyTypes.WORKER),
-    [role.ECARRIER]: new Body(role.ECARRIER, 1, 3, bodyTypes.CARRIER),  // scale num to num of e's
-    [role.MCARRIER]: new Body(role.MCARRIER, 2, 3, bodyTypes.CARRIER),
-};
+
