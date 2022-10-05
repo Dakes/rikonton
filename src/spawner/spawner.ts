@@ -1,7 +1,7 @@
-import {Role, task} from "../augmentations/creep"
+import {Role, task}      from "../augmentations/creep"
+import * as myCreepTypes from "../augmentations/creep"
 // import {Room} from "../augmentations/room"
 // import * as creepAug from "../augmentations/creep"
-import * as myCreepTypes from "../augmentations/creep"
 import { SlowBuffer } from "buffer";
 import { BODIES, CreepPopulation, Population, updateCreepNumber } from "./population";
 
@@ -27,8 +27,6 @@ export function spawnCreeps(room: Room): void
         spawnCreep(spawns[idx], pop.population[0]);
         idx++;
     }
-
-
 }
 
 /**
@@ -52,7 +50,7 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
     if (spawn.room.spawnEnergy() < 250)
         return false;
 
-    // check if creep count is up to date and update for next try. TODO: fix (memory)
+    // check if creep count is up to date and update for next try.
     if (spawn.room.memory.populationNumber[cp.role] != updateCreepNumber(spawn.room, cp.role))
         return false;
 
@@ -107,6 +105,23 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
                         pos: null,
                     }
             break;
+        case Role.CARRIER:
+            memory = <myCreepTypes.EnergyCreepMemory> {
+                        role: cp.role,
+                        room: spawn.room.name,
+                        task: task.RETRIEVING,
+                        resourceStack: null,
+                    }
+            break;
+        case Role.CONSTRUCTOR:
+            memory = <myCreepTypes.WorkerCreepMemory> {
+                        role: cp.role,
+                        room: spawn.room.name,
+                        task: task.RETRIEVING,
+                        resourceStack: null,
+                        id: null,
+                    }
+            break;
 
 
         default:
@@ -118,6 +133,8 @@ function spawnCreep(spawn: StructureSpawn, cp: CreepPopulation): boolean
     {
         let body: BodyPartConstant[] = BODIES[cp.role].getBody(spawn.room.spawnEnergy());
         let name: string = genCreepName(cp.role, spawn);
+        if (body.length == 0)
+            return false;
 
         let success = spawn.spawnCreep(
             body,
@@ -167,7 +184,7 @@ function removeCompleteCreepsFromPop(room: Room, pop: Population): Population
  */
 function sortPopulationPriority(pop: Population): Population
 {
-    pop.population = _.sortBy(pop.population, ['live', function(cp: CreepPopulation) {
+    pop.population = _.sortByOrder(pop.population, ['live', function(cp: CreepPopulation) {
         return BODIES[cp.role].priority;
     }]);
     return pop;
@@ -175,13 +192,13 @@ function sortPopulationPriority(pop: Population): Population
 
 function getPopulation(creeps: Creep[]): Population
 {
-    const roleValues = Object.values(myCreepTypes.Role);
+    const roleValues = Object.values(Role);
     let cpa: CreepPopulation[] = [];
     let total = 0;
-    roleValues.forEach((rol, idx) => {
+    roleValues.forEach((role, idx) => {
         let tCreeps: Creep[] = _.filter(creeps, (c) =>
-        c.memory.role == rol);
-        cpa[idx] = {role: rol, live: tCreeps.length};
+        c.memory.role == role);
+        cpa[idx] = {role: role, live: tCreeps.length};
         total += tCreeps.length;
     });
 

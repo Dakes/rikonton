@@ -14,7 +14,7 @@ export function run(creep: Creep, r: Room)
     if (c.scavenge())
         return;
 
-    if (!c.memory.task && c.freeCapacity() > 0)
+    if (!c.memory.task && c.usedCapacity() == 0)
         c.task(task.RETRIEVING);
 
     if (c.retrieve())

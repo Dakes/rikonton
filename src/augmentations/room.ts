@@ -8,11 +8,11 @@ export { }
 //import {Room} from "."
 
 // Where to place central container compared to Spawn Nr.1
-const CONT_OFFSET_X = -2;
-const CONT_OFFSET_Y = 2;
+const CONT_OFFSET = [-2, 2];
 
-const STORAGE_OFFSET_X = -1;
-const STORAGE_OFFSET_Y = 0;
+const STORAGE_OFFSET = [-1, 0];
+
+const TOWER_OFFSET = [[-2, 1], [-1, 2], [-2, 3], [-2, -1], [-1, -2], [-2, -3]]
 
 
 declare global
@@ -27,12 +27,14 @@ declare global
         getCentralContPos(): RoomPosition;
         getCentralCont(): StructureContainer | null;
         getStoragePos(): RoomPosition;
+        getTowerPositions(): RoomPosition[];
         myActiveStructures(struct?: StructureConstant|null): Structure[];
         _myActiveStructures?: Structure[];
         myStructures(struct?: StructureConstant|null): Structure[];
         _myStructures?: Structure[];
         allStructures(struct?: StructureConstant|null): Structure[];
         _allStructures?: Structure[];
+        myConstructionSites(): ConstructionSite[];
 
         myExtensions(): StructureExtension[]; // technically not needed any more
         _myExtensions?: StructureExtension[]; // technically not needed any more
@@ -47,6 +49,7 @@ declare global
         maxSpawnEnergy(): number;
         _maxSpawnEnergy?: number;
         droppedResources(): number;
+        ruinResources(): number;
 
         // memory management
         initRoomMemory(): any;
@@ -64,12 +67,14 @@ declare global
     {
         ContainerPos: ContainerPosition[];
         populationNumber: typeof populationPermit;
+        controllerLevel: number|undefined;
         // roads;
     }
 }
 
 Room.prototype.initRoomMemory = function ()
 {
+    this.memory.controllerLevel = this.controller?.level;
     // TODO: write first spawn coords to memory
     if (this.memory.ContainerPos === undefined)
     {
@@ -80,7 +85,8 @@ Room.prototype.initRoomMemory = function ()
     if (this.memory.ContainerPos.length == 0)
         this.calcContainerPos();
 
-    this.memory.populationNumber = populationPermit;
+    if (this.memory.populationNumber == undefined)
+        this.memory.populationNumber = populationPermit;
 }
 
 
@@ -123,8 +129,8 @@ Room.prototype.calcContainerPos = function ()
         let spawn = this.mySpawns()[0];
         let x = spawn.pos.x;
         let y = spawn.pos.y;
-        x += CONT_OFFSET_X;
-        y += CONT_OFFSET_Y;
+        x += CONT_OFFSET[0];
+        y += CONT_OFFSET[1];
         this.memory.ContainerPos.push(
             {
                 "id": null,
@@ -149,7 +155,7 @@ Room.prototype.getSpawnPos = function (num:number|undefined=0)
 Room.prototype.getCentralContPos = function ()
 {
     let spawnPos = this.getSpawnPos();
-    return new RoomPosition(spawnPos.x+CONT_OFFSET_X, spawnPos.y+CONT_OFFSET_Y, this.name);
+    return new RoomPosition(spawnPos.x+CONT_OFFSET[0], spawnPos.y+CONT_OFFSET[1], this.name);
 }
 
 // TODO: cache
@@ -173,7 +179,16 @@ Room.prototype.getCentralCont = function ()
 Room.prototype.getStoragePos = function ()
 {
     let sp = this.getSpawnPos(0);
-    return new RoomPosition(sp.x+STORAGE_OFFSET_X, sp.y+STORAGE_OFFSET_Y, this.name);
+    return new RoomPosition(sp.x+STORAGE_OFFSET[0], sp.y+STORAGE_OFFSET[1], this.name);
+}
+
+Room.prototype.getTowerPositions = function ()
+{
+    let sp = this.getSpawnPos(0);
+    let towerPos: RoomPosition[] = [];
+    for (let i in TOWER_OFFSET)
+        towerPos.push(new RoomPosition(sp.x+TOWER_OFFSET[i][0], sp.y+TOWER_OFFSET[i][1], this.name));
+    return towerPos;
 }
 
 /**
@@ -191,13 +206,16 @@ Room.prototype.getStore = function (store:boolean=true)
     let cont = this.getCentralCont();
     if (store && (!cont || spawn?.store.getFreeCapacity(RESOURCE_ENERGY) > 0))
         return spawn;
-    else if (store && cont && spawn?.store.getFreeCapacity(RESOURCE_ENERGY) == 0)
+    if (store && cont && spawn && spawn.store.getFreeCapacity(RESOURCE_ENERGY) == 0)
         return cont;
 
-    if (!store && cont?.store.getUsedCapacity(RESOURCE_ENERGY) != 0)
+    if (!store && cont && cont.store.getUsedCapacity(RESOURCE_ENERGY) != 0)
         return cont;
-    if (!store && spawn?.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
+
+    if (!store && spawn && spawn.store.getUsedCapacity(RESOURCE_ENERGY) == 300)
         return spawn;
+    else if (!store && cont)
+        return cont;
 
     if (spawn)
         return spawn;
@@ -279,11 +297,11 @@ Room.prototype.myActiveStructures = function (struct:StructureConstant|null=null
     return this.myActiveStructures(struct);
 }
 
-Room.prototype.myStructures = function (struct:StructureConstant|null=null)
+Room.prototype.myStructures = function (struct?:StructureConstant)
 {
     if (this._myStructures !== undefined)
     {
-        if (struct != null)
+        if (struct != undefined)
             return _.filter(this._myStructures, (s: Structure) =>
                 s.structureType == struct) as Structure[];
         return this._myStructures;
@@ -293,18 +311,23 @@ Room.prototype.myStructures = function (struct:StructureConstant|null=null)
     return this.myStructures(struct);
 }
 
-Room.prototype.allStructures = function (struct:StructureConstant|null=null)
+Room.prototype.allStructures = function (struct?:StructureConstant)
 {
     if (this._allStructures !== undefined)
     {
-        if (struct != null)
+        if (struct != undefined)
             return _.filter(this._allStructures, (s: Structure) =>
                 s.structureType == struct) as Structure[];
         return this._allStructures;
     }
     const result = this.find(FIND_STRUCTURES);
     this._allStructures = result;
-    return this.myStructures(struct);
+    return this.allStructures(struct);
+}
+
+Room.prototype.myConstructionSites = function ()
+{
+    return this.find(FIND_MY_CONSTRUCTION_SITES);
 }
 
 Room.prototype.myCreeps = function (r:(Role|null)=null)
@@ -327,6 +350,16 @@ Room.prototype.droppedResources = function ()
     let dropped = this.find(FIND_DROPPED_RESOURCES);
     for (let i in dropped)
         res += dropped[i].amount;
+
+    return res;
+}
+
+Room.prototype.ruinResources = function ()
+{
+    let res = 0;
+    let ruins = this.find(FIND_RUINS);
+    for (let i in ruins)
+        res += ruins[i].store.getUsedCapacity(RESOURCE_ENERGY);
 
     return res;
 }

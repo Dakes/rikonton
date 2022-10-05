@@ -4,7 +4,6 @@
  */
 
 import { updateCreepNumber } from "spawner/population";
-import { isReturnStatement } from "typescript";
 import { EnergyCreep, MinerCreep, Role, task } from "../augmentations/creep"
 
 /**
@@ -59,7 +58,7 @@ export function runExtensionCarrier(creep: Creep, r: Room)
 export function runMinerCarrier(creep: Creep, r: Room)
 {
     let c: MinerCreep = new MinerCreep(creep.id);
-    c.setRoleSource(Role.MCARRIER, Math.round(updateCreepNumber(r, c.memory.role)/2)); // <-- TODO: Scale with number of creeps
+    c.setRoleSource(Role.MCARRIER, Math.ceil(updateCreepNumber(r, c.memory.role)/2));
     if (!c.memory.sourceId)
         return;
 
@@ -116,5 +115,51 @@ export function runMinerCarrier(creep: Creep, r: Room)
 
     if (c.isEmty())
         c.task(task.NONE);
+
+}
+
+/**
+ * General purpose Carrier for refilling everything
+ * * -> CentralCont -> (Scavenge) -> deliver -> *
+ * @param creep
+ * @param r
+ */
+export function runCarrier(creep: Creep, r: Room)
+{
+    let c: EnergyCreep = new EnergyCreep(creep.id);
+
+    c.checkResourceStack();
+
+    if (!c.memory.task && c.usedCapacity() < 50)
+    {
+        let roomStore = r.getStore(false);
+        if (roomStore && roomStore.store.getUsedCapacity(RESOURCE_ENERGY) >= 250)
+            c.task(task.RETRIEVING);
+        else
+            c.task(task.SCAVENGING);
+    }
+
+    if (c.scavenge())
+        return;
+    if (c.retrieve())
+        return;
+
+    if (c.freeCapacity() == 0)
+        c.task(task.FILLING);
+
+    if (c.fillTower())
+        return;
+
+    // fill spawn
+    // fill containers from store
+
+
+    if (c.fillExtension())
+        return;
+
+    // if (c.freeCapacity() < 50 && r.getStore()?.store.getUsedCapacity(RESOURCE_ENERGY) == 0)
+    //    c.task(task.SCAVENGING);
+    // else if (c.freeCapacity() < 50)
+    //    c.task(task.RETRIEVING);
 
 }

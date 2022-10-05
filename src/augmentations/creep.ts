@@ -1,4 +1,4 @@
-import { positionSquare } from "helpers/positions";
+import { sortConstructionSites, sortStructures } from "structures/helpers";
 
 export {};
 // import {role} from "."
@@ -63,6 +63,8 @@ export class MyCreep extends Creep
 export interface EnergyCreepMemory extends CreepMemory
 {
     resourceStack: Id<Resource> | Id<Tombstone> | Id<Ruin> | null;  // Stack to pick up from
+    // ID of whatever creep is working on.
+    id: Id<Structure|ConstructionSite> | null;
 }
 
 export class EnergyCreep extends MyCreep
@@ -167,10 +169,27 @@ export class EnergyCreep extends MyCreep
      */
     checkResourceStack(): boolean
     {
-        if (this.memory.resourceStack)
-            if (Game.getObjectById(this.memory.resourceStack))
-                return true;
-            this.memory.resourceStack = null;
+        if (!this.checkId(this.memory.resourceStack))
+        {
+            this.clearResourceStack();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     *
+     * @param id ID to check
+     * @param sConst If provided checks whether id is of this type
+     * @returns boolean
+     */
+    checkId(id: Id<Structure|ConstructionSite|Source|Resource|Tombstone|Ruin>|null): boolean
+    {
+        if (id == null)
+            return false;
+        let obj = Game.getObjectById(id);
+        if (obj)
+            return true;
         return false;
     }
 
@@ -186,6 +205,7 @@ export class EnergyCreep extends MyCreep
      */
     scavenge(resource=RESOURCE_ENERGY): boolean
     {
+        this.checkResourceStack();
         if (this.memory.task != task.SCAVENGING)
             return false;
 
@@ -251,10 +271,10 @@ export class EnergyCreep extends MyCreep
         {
             if (store.store.getUsedCapacity(resource) == 0)
                 return true;
-            // if (store.structureType == STRUCTURE_SPAWN &&
-            //     // @ts-ignore
-            //     store.store.getUsedCapacity(resource) < 250)
-            //     return true;
+            let storedEn = store.store.getUsedCapacity(resource);
+            if (store.structureType == STRUCTURE_SPAWN &&
+                storedEn && storedEn < 300)
+                return true;
             if (store && this.withdraw(store, resource) == ERR_NOT_IN_RANGE)
             {
                 this.moveTo(store);
@@ -268,18 +288,19 @@ export class EnergyCreep extends MyCreep
 
     setResourceStack(resource: ResourceConstant): boolean
     {
-        let fcs: FindConstant[] = [FIND_DROPPED_RESOURCES, FIND_RUINS, FIND_TOMBSTONES]
+        let fcs: FindConstant[] = [FIND_RUINS, FIND_TOMBSTONES, FIND_DROPPED_RESOURCES]
         for (let i in fcs)
-            if (this.findResourceStack(fcs[i], resource))
+            if (this.findAndSetResourceStack(fcs[i], resource))
                 return true;
         return false;
     }
 
-    findResourceStack(find: FindConstant, resource: ResourceConstant): boolean
+    findAndSetResourceStack(find: FindConstant, resource: ResourceConstant): boolean
     {
         if (find != FIND_DROPPED_RESOURCES)
         {
             let finds: (Ruin | Tombstone)[] = this.room.find(find);
+            finds = _.shuffle(finds);
             for (let i in finds)
                 if (finds[i]?.store.getUsedCapacity(resource) > 5)
                 {
@@ -293,7 +314,7 @@ export class EnergyCreep extends MyCreep
             // without shuffle creeps always prefer the same stack
             finds = _.shuffle(finds);
             for (let i in finds)
-                if (finds[i]?.resourceType === resource && finds[i]?.amount > 50)
+                if (finds[i]?.resourceType === resource)// && finds[i]?.amount > 50)
                 {
                     this.memory.resourceStack = finds[i].id;
                     return true;
@@ -343,20 +364,54 @@ export class EnergyCreep extends MyCreep
         return true;
     }
 
-    /**
-     * Check extensions around creep and fill them, it they have space.
-     * @returns true, if one was filled. false if there is none.
-     */
-    fillAdjadentExtensions(): boolean
+    fillTower(): boolean
     {
-        let adjPos = positionSquare(this.pos);
+        if (this.memory.task != task.FILLING)
+            return false
+        if (!this.checkId(this.memory.id))
+            this.memory.id = null;
+
+        // fill tower
+        if (this.memory.id)
+        {
+            let cTower = Game.getObjectById(this.memory.id);
+            if (!cTower || cTower?.structureType != STRUCTURE_TOWER ||
+                (cTower instanceof ConstructionSite))
+                return false;
+            // @ts-ignore
+            if (this.transfer(cTower, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE)
+            {
+                this.moveTo(cTower);
+                return true;
+            }
+        }
+
+        // set tower ID
+        if (this.memory.task == task.FILLING && !this.memory.id)
+        {
+            const towerPos = this.room.getTowerPositions();
+            for (let i in towerPos)
+            {
+                let tower: StructureTower[] = this.room.lookForAt(LOOK_STRUCTURES,
+                    towerPos[i].x, towerPos[i].y) as StructureTower[];
+                if (tower.length == 0)
+                    continue
+                let tStore = tower[0].store;
+                // refill if below 1/3 energy
+                if (tStore.getUsedCapacity(RESOURCE_ENERGY) < tStore.getCapacity(RESOURCE_ENERGY)/3)
+                {
+                    this.memory.id = tower[0].id;
+                    return true;
+                }
+            }
+        }
         return false;
     }
 }
 
 export interface WorkerCreepMemory extends EnergyCreepMemory
 {
-    working: boolean;  // TODO: remove?
+
 }
 
 export class WorkerCreep extends EnergyCreep
@@ -373,17 +428,115 @@ export class WorkerCreep extends EnergyCreep
      *
      * @returns True if doing. False if done.
      */
-    upgradeCont()
+    upgradeCont(): boolean
     {
         if (this.memory.task != task.UPGRADING)
             return false;
         let cont = this.room.controller;
-        if (cont && this.payload(RESOURCE_ENERGY) > 0)
+        if (cont && this.usedCapacity() > 0)
         {
+            if (Math.random() > 0.95)
+                this.moveTo(cont);
             if (this.upgradeController(cont) == ERR_NOT_IN_RANGE)
                 this.moveTo(cont);
             return true;
         }
+        this.memory.task = task.NONE;
+        return false;
+    }
+
+    /**
+     * Clear the ID only when object does not exist
+     */
+    clearId()
+    {
+        if (!this.checkId(this.memory.id))
+            this.memory.id = null;
+    }
+
+    /**
+     * @returns True if doing. False if done.
+     */
+    construct(): boolean
+    {
+        if (this.memory.task != task.CONSTRUCTING)
+            return false;
+        this.clearId();
+        if (!this.memory.id)
+        {
+            let cSites = sortConstructionSites(this.room.myConstructionSites());
+            if (cSites.length == 0)
+            {
+                this.memory.task = task.NONE;
+                return false;
+            }
+            this.memory.id = cSites[0].id;
+        }
+        else
+        {
+            const cSite = Game.getObjectById(this.memory.id);
+            if (!cSite || !(cSite instanceof ConstructionSite))
+            {
+                this.memory.task = task.NONE;
+                return false;
+            }
+            // @ts-ignore
+            if (this.build(cSite) == ERR_NOT_IN_RANGE)
+                this.moveTo(cSite);
+
+            if (this.usedCapacity() == 0)
+            {
+                this.memory.task = task.NONE;
+                return false;
+            }
+            return true;
+        }
+
+        this.memory.task = task.NONE;
+        return false;
+    }
+
+    repairStructures(): boolean
+    {
+        // TODO: handle walls & ramparts
+        if (this.memory.task != task.REPAIRING)
+            return false;
+        this.clearId();
+        if (!this.memory.id)
+        {
+            let strucs: Structure[] = sortStructures(this.room.allStructures());
+            if (strucs.length == 0)
+                return false;
+            for (let i in strucs)
+            {
+                let struc = Game.getObjectById(strucs[i].id)
+                if (struc && struc.hits < struc.hitsMax/4 &&
+                    !(struc instanceof ConstructionSite))
+                {
+                    this.memory.id = strucs[i].id;
+                    return true;
+                }
+            }
+        }
+        else if (!(Game.getObjectById(this.memory.id) instanceof ConstructionSite))
+        {
+            const repairSite: Structure = Game.getObjectById(this.memory.id) as unknown as Structure;
+            if (!repairSite)
+                return false;
+            // @ts-ignore
+            if (this.repair(repairSite) == ERR_NOT_IN_RANGE)
+                this.moveTo(repairSite);
+            if (repairSite.hits >= repairSite.hitsMax-100)
+                this.memory.id = null;
+
+            if (this.usedCapacity() == 0)
+            {
+                this.memory.task = task.NONE;
+                return false;
+            }
+            return true;
+        }
+
         this.memory.task = task.NONE;
         return false;
     }
@@ -469,7 +622,12 @@ export class MinerCreep extends WorkerCreep
             if (source)
                 if (this.harvest(source) == ERR_NOT_IN_RANGE)
                 {
-                    this.moveTo(source);
+                    if (this.moveTo(source) == ERR_NO_PATH)
+                    {
+                        this.memory.task = task.NONE;
+                        return false;
+                    }
+
                     return true;
                 }
             if (this.store.getFreeCapacity() == 0)

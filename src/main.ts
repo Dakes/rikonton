@@ -6,6 +6,7 @@ import * as pMiner from "./roles/primitive_miner"
 import * as miner from "./roles/miner"
 import * as upgrader from "./roles/upgrader"
 import * as carrier from "./roles/carrier"
+import * as constructor from "./roles/constructor"
 import * as room from "./augmentations/room"
 import './augmentations';
 
@@ -13,12 +14,13 @@ import { constructContainers, constructStorage } from "structures/store";
 
 // legacy imports
 import * as defenders from          "./roles/role.defender"
-import * as constructors from       "./roles/role.constructor"
 import * as carriers from           "./roles/role.carrier"
 import * as roads from              "./roles/road"
 import * as towers from             "./roles/tower"
 import * as extensions from         "./roles/extension"
 import * as structures from         "./roles/structures"
+import { constructTowers, manageTowers } from "structures/tower";
+import { updateAllCreepNumbers } from "spawner/population";
 
 
 
@@ -40,7 +42,10 @@ declare global
     }
 }
 
-_.forEach(Game.rooms, (r: Room) => {r.initRoomMemory();});
+_.forEach(Game.rooms, (r: Room) => {
+    r.initRoomMemory();
+    constructStructures(r);
+});
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
@@ -87,6 +92,12 @@ function manageRoom(room: Room)
                 case Role.MCARRIER:
                     carrier.runMinerCarrier(creep, room);
                     break;
+                case Role.CARRIER:
+                    carrier.runCarrier(creep, room);
+                    break;
+                case Role.CONSTRUCTOR:
+                    constructor.run(creep, room);
+                    break;
             }
         }
         catch (ex)
@@ -96,21 +107,13 @@ function manageRoom(room: Room)
 
     });
 
-    // Build structures
-    if (Game.time % 1002 == 0)
-    {
-        constructContainers(room);
-    }
-    if (Game.time % 10016 == 0)
-    {
-        constructStorage(room);
-    }
+    constructStructures(room);
 
 
     // legacy code
     let spawns = room.find(FIND_MY_SPAWNS);
     let spawn = spawns[Game.time%spawns.length];
-    constructors.run(spawn);
+    defenders.run(spawn);
 
 /*
     // miners.run(spawn);
@@ -130,26 +133,35 @@ function manageRoom(room: Room)
 
     try
     {
-
-    } catch (ex)
-    {
-        console.log('Error during Creep code execution');
-        console.log(ex);
-    }
-
-
-
-    /*
-
-    try
-    {
         manageTowers(room);
     } catch (ex)
     {
         console.log('Error during manageTowers');
         console.log(ex);
     }
-    */
+}
+
+function constructStructures(room: Room)
+{
+    const mod = 1207;
+    let t = Game.time;
+    // on controller update rebuild structures
+    if (room.controller?.level && room.memory.controllerLevel &&
+        room.controller.level > room.memory.controllerLevel)
+    {
+        room.memory.controllerLevel = room.controller.level;
+        t = mod;
+    }
+    if (t % mod == 0)
+    {
+        constructContainers(room);
+        constructTowers(room);
+        updateAllCreepNumbers(room);
+    }
+    if (t % (mod*10) == 0)
+    {
+        constructStorage(room);
+    }
 }
 
 function clearMemory()
