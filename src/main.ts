@@ -14,13 +14,10 @@ import { constructContainers, constructStorage } from "structures/store";
 
 // legacy imports
 import * as defenders from          "./roles/role.defender"
-import * as carriers from           "./roles/role.carrier"
 import * as roads from              "./roles/road"
-import * as towers from             "./roles/tower"
-import * as extensions from         "./roles/extension"
-import * as structures from         "./roles/structures"
 import { constructTowers, manageTowers } from "structures/tower";
 import { updateAllCreepNumbers } from "spawner/population";
+import { constructExtensions } from "structures/extension";
 
 
 
@@ -116,13 +113,10 @@ function manageRoom(room: Room)
     defenders.run(spawn);
 
 /*
-    // miners.run(spawn);
     //defenders.run(spawn);
-    // primitive_miners.run(spawn);
 
     miner_carriers.run(spawn);
     carriers.run(spawn);
-    // upgrader.run(spawn);
 
     roads.run(spawn);
     towers.run(spawn);
@@ -156,6 +150,7 @@ function constructStructures(room: Room)
     {
         constructContainers(room);
         constructTowers(room);
+        constructExtensions(room);
         updateAllCreepNumbers(room);
     }
     if (t % (mod*10) == 0)

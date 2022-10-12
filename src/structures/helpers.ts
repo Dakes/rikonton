@@ -32,3 +32,9 @@ function sortAnyStructures(sites: ConstructionSite[]|Structure[])
         }
     ]);
 }
+
+export function destroyRoad(pos: RoomPosition)
+{
+    let room = Game.rooms[pos.roomName];
+    room.destroyRoadAt(pos.x, pos.y);
+}
